@@ -98,22 +98,22 @@ class RolePermissionSeeder extends Seeder
             'delete users',
         ];
 
-        // Create permissions
+        // Create permissions if they don't exist
         foreach ($permissions as $permission) {
-            Permission::create(['name' => $permission]);
+            Permission::firstOrCreate(['name' => $permission]);
         }
 
-        // Create roles and assign permissions
-        $adminKepegawaian = Role::create(['name' => 'Admin Kepegawaian']);
-        $pegawai = Role::create(['name' => 'Pegawai']);
-        $pimpinan = Role::create(['name' => 'Pimpinan']);
-        $adminKeuangan = Role::create(['name' => 'Admin Keuangan']);
+        // Create roles if they don't exist
+        $adminKepegawaian = Role::firstOrCreate(['name' => 'Admin Kepegawaian']);
+        $pegawai = Role::firstOrCreate(['name' => 'Pegawai']);
+        $pimpinan = Role::firstOrCreate(['name' => 'Pimpinan']);
+        $adminKeuangan = Role::firstOrCreate(['name' => 'Admin Keuangan']);
 
         // Admin Kepegawaian permissions - full access
-        $adminKepegawaian->givePermissionTo(Permission::all());
+        $adminKepegawaian->syncPermissions(Permission::all());
 
-        // Pegawai permissions - limited access
-        $pegawai->givePermissionTo([
+        // Get specific permissions for each role
+        $pegawaiPermissions = [
             'view pegawai', // can view their own profile
             'edit pegawai', // can edit their own profile
             'view pendidikan',
@@ -132,10 +132,9 @@ class RolePermissionSeeder extends Seeder
             'delete cuti',
             'view perjalanan_dinas',
             'view laporan_pd',
-        ]);
+        ];
 
-        // Pimpinan permissions
-        $pimpinan->givePermissionTo([
+        $pimpinanPermissions = [
             'view pegawai',
             'view jabatan',
             'view golongan',
@@ -148,13 +147,17 @@ class RolePermissionSeeder extends Seeder
             'assign perjalanan_dinas',
             'view laporan_pd',
             'verify laporan_pd',
-        ]);
+        ];
 
-        // Admin Keuangan permissions
-        $adminKeuangan->givePermissionTo([
+        $adminKeuanganPermissions = [
             'view laporan_pd',
             'verify laporan_pd',
             'view perjalanan_dinas',
-        ]);
+        ];
+
+        // Assign permissions to roles
+        $pegawai->syncPermissions($pegawaiPermissions);
+        $pimpinan->syncPermissions($pimpinanPermissions);
+        $adminKeuangan->syncPermissions($adminKeuanganPermissions);
     }
 }

@@ -76,4 +76,9 @@ class Pegawai extends Model
     {
         return $this->belongsToMany(PerjalananDinas::class, 'pegawai_perjalanan_dinas');
     }
+
+    public function sisaCuti()
+    {
+        return $this->hasMany(SisaCuti::class);
+    }
 }

@@ -102,6 +102,12 @@
             <div data-i18n="Cuti">Pengajuan Cuti</div>
         </a>
     </li>
+    <li class="menu-item {{ request()->routeIs('admin.sisa_cuti.*') ? 'active' : '' }}">
+        <a href="{{ route('admin.sisa_cuti.index') }}" class="menu-link">
+            <i class="menu-icon tf-icons bx bx-calendar-x"></i> <!-- Icon untuk sisa cuti, bisa diganti sesuai preferensi -->
+            <div data-i18n="Sisa Cuti">Sisa Cuti</div>
+        </a>
+    </li>
 
     <!-- Perjalanan Dinas -->
     <li class="menu-header small text-uppercase">
@@ -124,7 +130,33 @@
     <li class="menu-header small text-uppercase">
       <span class="menu-header-text">Pengaturan</span>
     </li>
-    {{-- Menu items for Roles & Permissions will be added here --}}
+    <li class="menu-item {{ request()->routeIs('admin.roles.*') || request()->routeIs('admin.permissions.*') || request()->routeIs('admin.users.*') ? 'active open' : '' }}">
+        <a href="javascript:void(0);" class="menu-link menu-toggle">
+            <i class="menu-icon tf-icons bx bx-shield-alt-2"></i>
+            <div data-i18n="Manajemen Akses">Manajemen Akses</div>
+        </a>
+        <ul class="menu-sub">
+            <li class="menu-item {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
+                <a href="{{ route('admin.roles.index') }}" class="menu-link">
+                    <i class="menu-icon tf-icons bx bx-lock"></i>
+                    <div data-i18n="Roles">Roles</div>
+                </a>
+            </li>
+            <li class="menu-item {{ request()->routeIs('admin.permissions.*') ? 'active' : '' }}">
+                <a href="{{ route('admin.permissions.index') }}" class="menu-link">
+                    <i class="menu-icon tf-icons bx bx-lock-alt"></i>
+                    <div data-i18n="Permissions">Permissions</div>
+                </a>
+            </li>
+            <li class="menu-item {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                <a href="{{ route('admin.users.index') }}" class="menu-link">
+                    <i class="menu-icon tf-icons bx bx-user-circle"></i>
+                    <div data-i18n="Users">Users</div>
+                </a>
+            </li>
+        </ul>
+    </li>
+
 
   </ul>
 </aside>

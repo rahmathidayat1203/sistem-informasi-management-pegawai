@@ -13,6 +13,10 @@ use App\Http\Controllers\Admin\JenisCutiController;
 use App\Http\Controllers\Admin\CutiController;
 use App\Http\Controllers\Admin\PerjalananDinasController;
 use App\Http\Controllers\Admin\LaporanPDController;
+use App\Http\Controllers\Admin\SisaCutiController;
+use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\PermissionController;
+use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -42,6 +46,10 @@ Route::middleware('auth')->group(function () {
         Route::resource('cuti', CutiController::class);
         Route::resource('perjalanan_dinas', PerjalananDinasController::class);
         Route::resource('laporan_pd', LaporanPDController::class);
+        Route::resource('sisa_cuti', SisaCutiController::class); // Tambahkan route untuk sisa cuti
+        Route::resource('roles', RoleController::class);
+        Route::resource('permissions', PermissionController::class);
+        Route::resource('users', UserController::class);
     });
 });
 
