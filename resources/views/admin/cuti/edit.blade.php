@@ -1,0 +1,144 @@
+@extends('layouts.app')
+
+@section('title', 'Edit Cuti')
+
+@section('content')
+<div class="card">
+    <h5 class="card-header">Edit Data Cuti</h5>
+    <div class="card-body">
+        <form action="{{ route('admin.cuti.update', $cuti->id) }}" method="POST" enctype="multipart/form-data">
+            @csrf
+            @method('PUT')
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="pegawai_id" class="form-label">Nama Pegawai</label>
+                        <select class="form-control @error('pegawai_id') is-invalid @enderror" id="pegawai_id" name="pegawai_id" required>
+                            <option value="">Pilih Pegawai</option>
+                            @foreach($pegawais as $pegawai)
+                                <option value="{{ $pegawai->id }}" {{ old('pegawai_id', $cuti->pegawai_id) == $pegawai->id ? 'selected' : '' }}>{{ $pegawai->nama_lengkap }}</option>
+                            @endforeach
+                        </select>
+                        @error('pegawai_id')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="jenis_cuti_id" class="form-label">Jenis Cuti</label>
+                        <select class="form-control @error('jenis_cuti_id') is-invalid @enderror" id="jenis_cuti_id" name="jenis_cuti_id" required>
+                            <option value="">Pilih Jenis Cuti</option>
+                            @foreach($jenisCutis as $jenisCuti)
+                                <option value="{{ $jenisCuti->id }}" {{ old('jenis_cuti_id', $cuti->jenis_cuti_id) == $jenisCuti->id ? 'selected' : '' }}>{{ $jenisCuti->nama }}</option>
+                            @endforeach
+                        </select>
+                        @error('jenis_cuti_id')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="tgl_pengajuan" class="form-label">Tanggal Pengajuan</label>
+                        <input type="date" class="form-control @error('tgl_pengajuan') is-invalid @enderror" id="tgl_pengajuan" name="tgl_pengajuan" value="{{ old('tgl_pengajuan', $cuti->tgl_pengajuan) }}" required>
+                        @error('tgl_pengajuan')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="tgl_mulai" class="form-label">Tanggal Mulai</label>
+                        <input type="date" class="form-control @error('tgl_mulai') is-invalid @enderror" id="tgl_mulai" name="tgl_mulai" value="{{ old('tgl_mulai', $cuti->tgl_mulai) }}" required>
+                        @error('tgl_mulai')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="tgl_selesai" class="form-label">Tanggal Selesai</label>
+                        <input type="date" class="form-control @error('tgl_selesai') is-invalid @enderror" id="tgl_selesai" name="tgl_selesai" value="{{ old('tgl_selesai', $cuti->tgl_selesai) }}" required>
+                        @error('tgl_selesai')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="status_persetujuan" class="form-label">Status Persetujuan</label>
+                        <select class="form-control @error('status_persetujuan') is-invalid @enderror" id="status_persetujuan" name="status_persetujuan" required>
+                            <option value="Diajukan" {{ old('status_persetujuan', $cuti->status_persetujuan) == 'Diajukan' ? 'selected' : '' }}>Diajukan</option>
+                            <option value="Disetujui" {{ old('status_persetujuan', $cuti->status_persetujuan) == 'Disetujui' ? 'selected' : '' }}>Disetujui</option>
+                            <option value="Ditolak" {{ old('status_persetujuan', $cuti->status_persetujuan) == 'Ditolak' ? 'selected' : '' }}>Ditolak</option>
+                        </select>
+                        @error('status_persetujuan')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="pimpinan_approver_id" class="form-label">Pimpinan Approver</label>
+                        <select class="form-control @error('pimpinan_approver_id') is-invalid @enderror" id="pimpinan_approver_id" name="pimpinan_approver_id">
+                            <option value="">Pilih Pimpinan Approver</option>
+                            @foreach($pimpinans as $pimpinan)
+                                <option value="{{ $pimpinan->id }}" {{ old('pimpinan_approver_id', $cuti->pimpinan_approver_id) == $pimpinan->id ? 'selected' : '' }}>{{ $pimpinan->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('pimpinan_approver_id')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="keterangan" class="form-label">Keterangan</label>
+                <textarea class="form-control @error('keterangan') is-invalid @enderror" id="keterangan" name="keterangan" rows="3" required>{{ old('keterangan', $cuti->keterangan) }}</textarea>
+                @error('keterangan')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+            
+            <div class="mb-3">
+                <label for="dokumen_pendukung" class="form-label">Dokumen Pendukung</label>
+                <input type="file" class="form-control @error('dokumen_pendukung') is-invalid @enderror" id="dokumen_pendukung" name="dokumen_pendukung" accept=".pdf,.jpg,.jpeg,.png">
+                @error('dokumen_pendukung')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+                <small class="form-text text-muted">Format: pdf, jpg, jpeg, png. Maksimal: 5MB</small>
+                
+                @if($cuti->dokumen_pendukung)
+                    <div class="mt-2">
+                        <label class="form-label">Dokumen Saat Ini:</label><br>
+                        @if(pathinfo($cuti->dokumen_pendukung, PATHINFO_EXTENSION) === 'pdf')
+                            <a href="{{ asset('storage/' . $cuti->dokumen_pendukung) }}" target="_blank" class="btn btn-sm btn-info">
+                                Lihat Dokumen PDF
+                            </a>
+                        @else
+                            <img src="{{ asset('storage/' . $cuti->dokumen_pendukung) }}" alt="Dokumen Pendukung" width="100" class="img-thumbnail">
+                        @endif
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="checkbox" name="hapus_file" value="1" id="hapus_file">
+                            <label class="form-check-label" for="hapus_file">
+                                Hapus dokumen saat ini
+                            </label>
+                        </div>
+                    </div>
+                @endif
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Update</button>
+            <a href="{{ route('admin.cuti.index') }}" class="btn btn-secondary">Batal</a>
+        </form>
+    </div>
+</div>
+@endsection
