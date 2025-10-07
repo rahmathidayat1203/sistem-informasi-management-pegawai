@@ -49,6 +49,8 @@ Route::middleware('auth')->group(function () {
         Route::resource('sisa_cuti', SisaCutiController::class); // Tambahkan route untuk sisa cuti
         Route::resource('roles', RoleController::class);
         Route::resource('permissions', PermissionController::class);
+        Route::get('roles/{id}/permissions', [RoleController::class, 'permissions'])->name('roles.permissions');
+        Route::put('roles/{id}/assign-permissions', [RoleController::class, 'assignPermissions'])->name('roles.assignPermissions');
         Route::resource('users', UserController::class);
     });
 });

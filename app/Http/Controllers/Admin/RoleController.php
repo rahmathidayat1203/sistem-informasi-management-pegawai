@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
 use Yajra\DataTables\Facades\DataTables;
 
 class RoleController extends Controller
@@ -22,6 +23,7 @@ class RoleController extends Controller
                 ->addColumn('action', function ($role) {
                     return '
                         <a href="' . route('admin.roles.edit', $role->id) . '" class="btn btn-sm btn-warning">Edit</a>
+                        <a href="' . route('admin.roles.permissions', $role->id) . '" class="btn btn-sm btn-info">Permissions</a>
                         <form action="' . route('admin.roles.destroy', $role->id) . '" method="POST" class="d-inline">
                             ' . csrf_field() . '
                             ' . method_field('DELETE') . '
@@ -92,6 +94,35 @@ class RoleController extends Controller
         ]);
 
         return redirect()->route('admin.roles.index')->with('success', 'Role berhasil diperbarui.');
+    }
+
+    /**
+     * Show the form for assigning permissions to the specified role.
+     */
+    public function permissions(string $id)
+    {
+        $role = Role::findOrFail($id);
+        $permissions = Permission::all();
+        $rolePermissions = $role->permissions->pluck('id')->toArray();
+
+        return view('admin.roles.permissions', compact('role', 'permissions', 'rolePermissions'));
+    }
+
+    /**
+     * Assign permissions to the specified role.
+     */
+    public function assignPermissions(Request $request, string $id)
+    {
+        $role = Role::findOrFail($id);
+        
+        $request->validate([
+            'permissions' => 'array',
+            'permissions.*' => 'exists:permissions,id',
+        ]);
+
+        $role->syncPermissions($request->permissions ?? []);
+
+        return redirect()->route('admin.roles.permissions', $role->id)->with('success', 'Permissions berhasil diperbarui untuk role ' . $role->name . '.');
     }
 
     /**
