@@ -27,7 +27,7 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email'],
+            'login' => ['required', 'string'],
             'password' => ['required', 'string'],
         ];
     }
@@ -41,11 +41,33 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        $loginValue = (string) $this->input('login');
+        $password = (string) $this->input('password');
+        $remember = $this->boolean('remember');
+
+        $primaryCredentials = ['password' => $password];
+        $fallbackCredentials = ['password' => $password];
+
+        if (filter_var($loginValue, FILTER_VALIDATE_EMAIL)) {
+            $primaryCredentials['email'] = $loginValue;
+            $fallbackCredentials['username'] = $loginValue;
+        } else {
+            $primaryCredentials['username'] = $loginValue;
+            $fallbackCredentials['email'] = $loginValue;
+        }
+
+        $primarySuccess = Auth::attempt($primaryCredentials, $remember);
+        $fallbackSuccess = false;
+
+        if (! $primarySuccess) {
+            $fallbackSuccess = Auth::attempt($fallbackCredentials, $remember);
+        }
+
+        if (! $primarySuccess && ! $fallbackSuccess) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
+                'login' => trans('auth.failed'),
             ]);
         }
 
@@ -80,6 +102,6 @@ class LoginRequest extends FormRequest
      */
     public function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
+        return Str::transliterate(Str::lower((string) $this->input('login')).'|'.$this->ip());
     }
 }

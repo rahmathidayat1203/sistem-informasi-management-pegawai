@@ -107,5 +107,59 @@
 
     <!-- Place this tag in your head or just before your close body tag. -->
     <script async defer src="https://buttons.github.io/buttons.js"></script>
+
+<!-- Notification Scripts -->
+<script>
+// Global notification functions
+function updateNotificationCount() {
+    $.get('{{ route("notifications.unread-count") }}', function(data) {
+        $('#notification-count').text(data.count);
+        
+        // Also update any other notification counts on the page
+        $('[data-unread-count]').each(function() {
+            $(this).attr('data-unread-count', data.count);
+        });
+    });
+}
+
+function loadNotifications() {
+    $.get('{{ route("notifications.recent") }}', function(data) {
+        $('#notification-dropdown-list').html(data.html);
+    });
+}
+
+function handleDropdownNotificationClick(notificationId, actionUrl) {
+    // Mark as read
+    $.ajax({
+        url: `{{ route('notifications.read', ':id') }}`.replace(':id', notificationId),
+        type: 'POST',
+        data: { _token: '{{ csrf_token() }}' },
+        success: function() {
+            // Update notification count
+            updateNotificationCount();
+            
+            // Navigate if action URL is provided
+            if (actionUrl && actionUrl !== '#') {
+                setTimeout(() => {
+                    window.location.href = actionUrl;
+                }, 300);
+            } else {
+                // Reload notifications
+                loadNotifications();
+            }
+        }
+    });
+}
+
+// Auto-refresh notifications every 30 seconds
+setInterval(function() {
+    updateNotificationCount();
+}, 30000);
+
+// Initialize notification count on page load
+$(document).ready(function() {
+    updateNotificationCount();
+});
+</script>
   </body>
 </html>

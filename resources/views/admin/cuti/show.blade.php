@@ -47,6 +47,18 @@
                 <td><strong>Keterangan</strong></td>
                 <td>{{ $cuti->keterangan }}</td>
             </tr>
+            @if(!empty($cuti->alokasi_sisa_cuti))
+            <tr>
+                <td><strong>Pengurangan Sisa Cuti</strong></td>
+                <td>
+                    <ul class="mb-0">
+                        @foreach($cuti->alokasi_sisa_cuti as $tahun => $hari)
+                            <li>{{ $tahun }}: {{ $hari }} hari</li>
+                        @endforeach
+                    </ul>
+                </td>
+            </tr>
+            @endif
             @if($cuti->dokumen_pendukung)
             <tr>
                 <td><strong>Dokumen Pendukung</strong></td>

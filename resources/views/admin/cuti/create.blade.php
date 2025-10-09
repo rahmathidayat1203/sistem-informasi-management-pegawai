@@ -21,6 +21,14 @@
                         @error('pegawai_id')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
+                        <div class="alert alert-info mt-3 d-none" id="sisaCutiContainer">
+                            <strong>Sisa Cuti Tahunan Tersedia:</strong>
+                            <div class="mt-2">Total: <span id="sisaCutiTotal">0</span> hari</div>
+                            <ul class="mb-0" id="sisaCutiPerYear"></ul>
+                        </div>
+                        <div class="alert alert-warning mt-3 d-none" id="sisaCutiWarning">
+                            Data sisa cuti tahunan belum tersedia untuk pegawai ini.
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-6">
@@ -122,3 +130,75 @@
     </div>
 </div>
 @endsection
+
+@push('page-js')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const pegawaiSelect = document.getElementById('pegawai_id');
+        const container = document.getElementById('sisaCutiContainer');
+        const perYearList = document.getElementById('sisaCutiPerYear');
+        const totalSpan = document.getElementById('sisaCutiTotal');
+        const warning = document.getElementById('sisaCutiWarning');
+        const urlTemplate = "{{ route('admin.cuti.sisa-cuti', ['pegawai' => '__pegawai__']) }}";
+
+        const resetSisaCuti = () => {
+            container.classList.add('d-none');
+            warning.classList.add('d-none');
+            perYearList.innerHTML = '';
+            totalSpan.textContent = '0';
+        };
+
+        const renderSisaCuti = (data) => {
+            const perYear = data.per_year || {};
+            const total = data.total || 0;
+
+            perYearList.innerHTML = '';
+            Object.entries(perYear).forEach(([year, days]) => {
+                const li = document.createElement('li');
+                li.textContent = `${year}: ${days} hari`;
+                perYearList.appendChild(li);
+            });
+
+            totalSpan.textContent = total;
+
+            if (total > 0) {
+                container.classList.remove('d-none');
+                warning.classList.add('d-none');
+            } else {
+                container.classList.add('d-none');
+                warning.classList.remove('d-none');
+            }
+        };
+
+        const fetchSisaCuti = async (pegawaiId) => {
+            if (!pegawaiId) {
+                resetSisaCuti();
+                return;
+            }
+
+            try {
+                const response = await fetch(urlTemplate.replace('__pegawai__', pegawaiId));
+                if (!response.ok) {
+                    throw new Error('Gagal mengambil data sisa cuti');
+                }
+
+                const data = await response.json();
+                renderSisaCuti(data);
+            } catch (error) {
+                resetSisaCuti();
+                warning.classList.remove('d-none');
+                warning.textContent = 'Tidak dapat memuat data sisa cuti. Silakan coba lagi.';
+            }
+        };
+
+        pegawaiSelect.addEventListener('change', (event) => {
+            warning.textContent = 'Data sisa cuti tahunan belum tersedia untuk pegawai ini.';
+            fetchSisaCuti(event.target.value);
+        });
+
+        if (pegawaiSelect.value) {
+            fetchSisaCuti(pegawaiSelect.value);
+        }
+    });
+</script>
+@endpush

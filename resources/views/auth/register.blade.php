@@ -48,6 +48,25 @@
         @enderror
     </div>
 
+    <!-- Username -->
+    <div class="mb-3">
+        <label for="username" class="form-label">Username</label>
+        <input
+            type="text"
+            class="form-control @error('username') is-invalid @enderror"
+            id="username"
+            name="username"
+            placeholder="Masukkan username unik"
+            value="{{ old('username') }}"
+            required
+        />
+        @error('username')
+            <div class="invalid-feedback">
+                {{ $message }}
+            </div>
+        @enderror
+    </div>
+
     <!-- Password -->
     <div class="mb-3 form-password-toggle">
         <label class="form-label" for="password">Password</label>

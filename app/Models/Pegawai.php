@@ -77,6 +77,17 @@ class Pegawai extends Model
         return $this->belongsToMany(PerjalananDinas::class, 'pegawai_perjalanan_dinas');
     }
 
+    /**
+     * Scope for searching pegawai by nama or NIP.
+     */
+    public function scopeSearch($query, string $search)
+    {
+        return $query->where(function ($q) use ($search) {
+            $q->where('nama_lengkap', 'LIKE', '%'.$search.'%')
+              ->orWhere('nip', 'LIKE', '%'.$search.'%');
+        });
+    }
+
     public function sisaCuti()
     {
         return $this->hasMany(SisaCuti::class);

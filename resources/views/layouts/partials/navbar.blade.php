@@ -25,6 +25,39 @@
     <!-- /Search -->
 
     <ul class="navbar-nav flex-row align-items-center ms-auto">
+      <!-- Notifications -->
+      <li class="nav-item navbar-dropdown dropdown-notification dropdown me-3">
+        <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown" onclick="loadNotifications()">
+          <div class="position-relative">
+            <i class='bx bx-bell text-body'></i>
+            <span class="badge bg-danger rounded-pill badge-up" id="notification-count">0</span>
+          </div>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-animated p-0" style="min-width: 300px;">
+          <li class="dropdown-menu-header border-bottom">
+            <div class="dropdown-header d-flex align-items-center py-2">
+              <h5 class="text-body mb-0 me-auto">Notifikasi</h5>
+              <a href="{{ route('notifications.index') }}" class="text-muted"><small>Lihat semua</small></a>
+            </div>
+          </li>
+          <li id="notification-dropdown-list">
+            <!-- Notifications will be loaded here -->
+            <div class="text-center py-3">
+              <div class="spinner-border spinner-border-sm text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+            </div>
+          </li>
+          <li class="dropdown-menu-footer border-top">
+            <a href="{{ route('notifications.index') }}" class="dropdown-item">
+              <i class="bx bx-bell me-1"></i>
+              Lihat semua notifikasi
+            </a>
+          </li>
+        </ul>
+      </li>
+      <!--/ Notifications -->
+      
       <!-- User -->
       <li class="nav-item navbar-dropdown dropdown-user dropdown">
         <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">

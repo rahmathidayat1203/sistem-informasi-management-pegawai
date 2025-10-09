@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\DataTables;
+use App\Notifications\LaporanPDVerified;
 
 class LaporanPDController extends Controller
 {
@@ -203,6 +204,131 @@ class LaporanPDController extends Controller
             return response()->json(['success' => true, 'message' => 'Data laporan perjalanan dinas berhasil dihapus.']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Terjadi kesalahan: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Get verification statistics.
+     */
+    public function verificationStats(Request $request)
+    {
+        $today = now()->format('Y-m-d');
+        
+        $pending = LaporanPD::where('status_verifikasi', 'Belum Diverifikasi')->count();
+        $approvedToday = LaporanPD::where('status_verifikasi', 'Disetujui')
+            ->whereDate('updated_at', $today)->count();
+        $rejectedToday = LaporanPD::where('status_verifikasi', 'Perbaikan')
+            ->whereDate('updated_at', $today)->count();
+            
+        return response()->json([
+            'pending' => $pending,
+            'approved_today' => $approvedToday,
+            'rejected_today' => $rejectedToday
+        ]);
+    }
+
+    /**
+     * Display verification index for Admin Keuangan.
+     */
+    public function verificationIndex(Request $request)
+    {
+        if ($request->ajax()) {
+            $laporanPDs = LaporanPD::with(['perjalananDinas', 'adminKeuanganVerifier'])
+                ->where('status_verifikasi', 'Belum Diverifikasi')
+                ->select('laporan_pd.*');
+
+            return DataTables::of($laporanPDs)
+                ->addColumn('action', function ($row) {
+                    $verifyUrl = route('keuangan.laporan_pd.verify', $row->id);
+                    $rejectUrl = route('keuangan.laporan_pd.reject', $row->id);
+                    $btn = '<button onclick="verifyLaporan(\'' . $verifyUrl . '\', ' . $row->id . ')" class="btn btn-success btn-sm me-1">Setujui</button>';
+                    $btn .= '<button onclick="rejectLaporan(\'' . $rejectUrl . '\', ' . $row->id . ')" class="btn btn-danger btn-sm">Tolak</button>';
+                    return $btn;
+                })
+                ->editColumn('perjalananDinas.nomor_surat_tugas', function($row) {
+                    return $row->perjalananDinas->nomor_surat_tugas ?? '-';
+                })
+                ->editColumn('pegawai.nama_lengkap', function($row) {
+                    $pegawai = $row->perjalananDinas->pegawai->first();
+                    return $pegawai ? $pegawai->nama_lengkap : '-';
+                })
+                ->editColumn('tgl_unggah', function($row) {
+                    return $row->tgl_unggah ? \Carbon\Carbon::parse($row->tgl_unggah)->format('d-m-Y H:i') : '-';
+                })
+                ->rawColumns(['action'])
+                ->make(true);
+        }
+
+        return view('keuangan.laporan_pd.verification');
+    }
+
+    /**
+     * Verify a laporan PD report.
+     */
+    public function verify(Request $request, LaporanPD $laporanPD)
+    {
+        $request->validate([
+            'catatan_verifikasi' => 'nullable|string|max:500'
+        ]);
+
+        if ($laporanPD->status_verifikasi !== 'Belum Diverifikasi') {
+            return response()->json(['message' => 'Only unverified reports can be verified'], 422);
+        }
+
+        DB::beginTransaction();
+        try {
+            $laporanPD->update([
+                'status_verifikasi' => 'Disetujui',
+                'admin_keuangan_verifier_id' => auth()->id(),
+                'catatan_verifikasi' => $request->catatan_verifikasi,
+            ]);
+
+            // Send notification to pimpinan
+            $pimpinans = User::role('Pimpinan')->get();
+            foreach ($pimpinans as $pimpinan) {
+                $pimpinan->notify(new LaporanPDVerified($laporanPD, 'verified'));
+            }
+            
+            DB::commit();
+            return response()->json(['message' => 'Laporan PD verified successfully and notifications sent to pimpinan']);
+        } catch (\Exception $e) {
+            DB::rollback();
+            return response()->json(['message' => 'Failed to verify laporan PD'], 500);
+        }
+    }
+
+    /**
+     * Reject a laporan PD report.
+     */
+    public function reject(Request $request, LaporanPD $laporanPD)
+    {
+        $request->validate([
+            'alasan_penolakan' => 'required|string|max:500'
+        ]);
+
+        if ($laporanPD->status_verifikasi !== 'Belum Diverifikasi') {
+            return response()->json(['message' => 'Only unverified reports can be rejected'], 422);
+        }
+
+        DB::beginTransaction();
+        try {
+            $laporanPD->update([
+                'status_verifikasi' => 'Perbaikan', // Using 'Perbaikan' as status
+                'admin_keuangan_verifier_id' => auth()->id(),
+                'alasan_penolakan' => $request->alasan_penolakan,
+            ]);
+
+            // Send notification to pimpinan
+            $pimpinans = User::role('Pimpinan')->get();
+            foreach ($pimpinans as $pimpinan) {
+                $pimpinan->notify(new LaporanPDVerified($laporanPD, 'rejected'));
+            }
+            
+            DB::commit();
+            return response()->json(['message' => 'Laporan PD rejected successfully and notifications sent to pimpinan']);
+        } catch (\Exception $e) {
+            DB::rollback();
+            return response()->json(['message' => 'Failed to reject laporan PD'], 500);
         }
     }
 }

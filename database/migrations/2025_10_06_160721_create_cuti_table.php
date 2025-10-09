@@ -22,6 +22,7 @@ return new class extends Migration
             $table->text('keterangan');
             $table->enum('status_persetujuan', ['Diajukan', 'Disetujui', 'Ditolak'])->default('Diajukan');
             $table->string('dokumen_pendukung')->nullable();
+            $table->json('alokasi_sisa_cuti')->nullable();
             $table->timestamps();
 
             $table->foreign('pegawai_id')->references('id')->on('pegawai')->onDelete('cascade');

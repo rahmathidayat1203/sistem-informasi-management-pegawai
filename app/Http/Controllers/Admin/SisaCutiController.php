@@ -45,7 +45,7 @@ class SisaCutiController extends Controller
     {
         // Ambil daftar pegawai untuk dropdown
         $pegawaiList = Pegawai::select('id', 'nama_lengkap')->orderBy('nama_lengkap')->get();
-        return view('sisa_cuti.create', compact('pegawaiList'));
+        return view('admin.sisa_cuti.create', compact('pegawaiList'));
     }
 
     /**
@@ -82,7 +82,7 @@ class SisaCutiController extends Controller
         // Buat record baru
         SisaCuti::create($request->only(['pegawai_id', 'tahun', 'jatah_cuti', 'sisa_cuti']));
 
-        return redirect()->route('sisa-cuti.index')->with('success', 'Data sisa cuti berhasil ditambahkan.');
+        return redirect()->route('admin.sisa_cuti.index')->with('success', 'Data sisa cuti berhasil ditambahkan.');
     }
 
     /**
@@ -105,7 +105,7 @@ class SisaCutiController extends Controller
         // Ambil daftar pegawai untuk dropdown
         $pegawaiList = Pegawai::select('id', 'nama_lengkap')->orderBy('nama_lengkap')->get();
 
-        return view('sisa_cuti.edit', compact('sisaCuti', 'pegawaiList'));
+        return view('admin.sisa_cuti.edit', compact('sisaCuti', 'pegawaiList'));
     }
 
     /**
@@ -148,7 +148,7 @@ class SisaCutiController extends Controller
         // Update record
         $sisaCuti->update($request->only(['pegawai_id', 'tahun', 'jatah_cuti', 'sisa_cuti']));
 
-        return redirect()->route('sisa-cuti.index')->with('success', 'Data sisa cuti berhasil diperbarui.');
+        return redirect()->route('admin.sisa_cuti.index')->with('success', 'Data sisa cuti berhasil diperbarui.');
     }
 
     /**
@@ -162,6 +162,6 @@ class SisaCutiController extends Controller
         // Hapus data
         $sisaCuti->delete();
 
-        return redirect()->route('sisa-cuti.index')->with('success', 'Data sisa cuti berhasil dihapus.');
+        return redirect()->route('admin.sisa_cuti.index')->with('success', 'Data sisa cuti berhasil dihapus.');
     }
 }

@@ -16,20 +16,20 @@
 <form id="formAuthentication" class="mb-3" action="{{ route('login') }}" method="POST">
     @csrf
 
-    <!-- Email -->
+    <!-- Email atau Username -->
     <div class="mb-3">
-        <label for="email" class="form-label">Email</label>
+        <label for="login" class="form-label">Email atau Username</label>
         <input
-            type="email"
-            class="form-control @error('email') is-invalid @enderror"
-            id="email"
-            name="email"
-            placeholder="Enter your email"
-            value="{{ old('email') }}"
+            type="text"
+            class="form-control @error('login') is-invalid @enderror"
+            id="login"
+            name="login"
+            placeholder="Masukkan email atau username"
+            value="{{ old('login') }}"
             required
             autofocus
         />
-        @error('email')
+        @error('login')
             <div class="invalid-feedback">
                 {{ $message }}
             </div>

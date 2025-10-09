@@ -22,9 +22,14 @@ class Cuti extends Model
         'keterangan',
         'status_persetujuan',
         'dokumen_pendukung',
+        'alokasi_sisa_cuti',
     ];
 
     protected $dates = ['tgl_pengajuan', 'tgl_mulai', 'tgl_selesai'];
+
+    protected $casts = [
+        'alokasi_sisa_cuti' => 'array',
+    ];
 
     public function pegawai()
     {

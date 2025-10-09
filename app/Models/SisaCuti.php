@@ -3,10 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo; // Import untuk relasi belongsTo
 
 class SisaCuti extends Model
 {
+    use HasFactory;
     protected $table = 'sisa_cuti';
     // Kolom yang bisa diisi (mass assignable)
     protected $fillable = [

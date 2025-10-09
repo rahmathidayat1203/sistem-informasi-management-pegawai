@@ -14,48 +14,46 @@ class TestUserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create a test admin user
-        $admin = User::create([
-            'name' => 'Test Admin',
-            'email' => 'admin@sipeg.test',
-            'password' => bcrypt('password'),
-            'username' => 'testadmin',
-        ]);
+        // Create test users for each role
+        $users = [
+            [
+                'name' => 'Test Admin Kepegawaian',
+                'email' => 'admin@sipeg.test',
+                'username' => 'admin',
+                'role' => 'Admin Kepegawaian',
+            ],
+            [
+                'name' => 'Test Pegawai',
+                'email' => 'pegawai@sipeg.test',
+                'username' => 'pegawai',
+                'role' => 'Pegawai',
+            ],
+            [
+                'name' => 'Test Pimpinan',
+                'email' => 'pimpinan@sipeg.test',
+                'username' => 'pimpinan',
+                'role' => 'Pimpinan',
+            ],
+            [
+                'name' => 'Test Admin Keuangan',
+                'email' => 'keuangan@sipeg.test',
+                'username' => 'keuangan',
+                'role' => 'Admin Keuangan',
+            ],
+        ];
 
-        // Assign admin role
-        $admin->assignRole('Admin Kepegawaian');
-        
-        // Create a test employee user
-        $pegawai = User::create([
-            'name' => 'Test Pegawai',
-            'email' => 'pegawai@sipeg.test',
-            'password' => bcrypt('password'),
-            'username' => 'pegawai',
-        ]);
-
-        // Assign pegawai role
-        $pegawai->assignRole('Pegawai');
-        
-        // Create a test pimpinan user
-        $pimpinan = User::create([
-            'name' => 'Test Pimpinan',
-            'email' => 'pimpinan@sipeg.test',
-            'password' => bcrypt('password'),
-            'username' => 'pimpinan',
-        ]);
-
-        // Assign pimpinan role
-        $pimpinan->assignRole('Pimpinan');
-        
-        // Create a test admin keuangan user
-        $adminKeuangan = User::create([
-            'name' => 'Test Admin Keuangan',
-            'email' => 'keuangan@sipeg.test',
-            'password' => bcrypt('password'),
-            'username' => 'keuangan',
-        ]);
-
-        // Assign admin keuangan role
-        $adminKeuangan->assignRole('Admin Keuangan');
+        foreach ($users as $userData) {
+            $user = User::firstOrCreate(
+                ['email' => $userData['email']],
+                [
+                    'name' => $userData['name'],
+                    'username' => $userData['username'],
+                    'password' => bcrypt('password'),
+                ]
+            );
+            
+            // Assign role
+            $user->assignRole($userData['role']);
+        }
     }
 }
