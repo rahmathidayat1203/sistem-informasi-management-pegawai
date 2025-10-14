@@ -101,9 +101,11 @@ Route::middleware('auth')->group(function () {
         // Perjalanan Dinas routes
         Route::middleware(['permission:view perjalanan_dinas'])->group(function () {
             Route::resource('perjalanan_dinas', PerjalananDinasController::class);
-            Route::get('pegawai/search', [PerjalananDinasController::class, 'searchPegawai'])->name('perjalanan_dinas.searchpegawai');
             Route::get('perjalanan_dinas/export/pdf', [PerjalananDinasController::class, 'exportPdf'])->name('perjalanan_dinas.export.pdf');
         });
+        
+        // Pegawai search route (needs to be accessible for AJAX)
+        Route::get('pegawai/search', [PerjalananDinasController::class, 'searchPegawai'])->name('perjalanan_dinas.searchpegawai');
 
         // Laporan PD routes
         Route::middleware(['permission:view laporan_pd'])->group(function () {

@@ -173,13 +173,24 @@ class PerjalananDinasController extends Controller
      */
     public function searchPegawai(Request $request)
     {
+        // Add permission check for security
+        if (!auth()->user()->hasAnyRole(['Admin Kepegawaian', 'Pimpinan', 'Admin Keuangan'])) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+        
         $search = $request->q;
+        
+        if (empty($search) || strlen($search) < 2) {
+            return response()->json([]);
+        }
         
         $pegawais = Pegawai::select('id', 'nama_lengkap', 'NIP')
             ->where(function($query) use ($search) {
                 $query->where('nama_lengkap', 'LIKE', '%'.$search.'%')
                       ->orWhere('NIP', 'LIKE', '%'.$search.'%');
             })
+            ->whereNotNull('nama_lengkap')
+            ->whereNotNull('NIP')
             ->limit(50)
             ->get();
             

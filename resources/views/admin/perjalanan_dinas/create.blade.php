@@ -134,11 +134,18 @@ $(document).ready(function() {
             dataType: 'json',
             delay: 250,
             data: function (params) {
+                console.log('Searching for:', params.term);
                 return {
                     q: params.term
                 };
             },
             processResults: function (data) {
+                console.log('Search results:', data);
+                // Handle error response
+                if (data.error) {
+                    console.error('Search error:', data.error);
+                    return { results: [] };
+                }
                 return {
                     results: data.map(function(item) {
                         return {
@@ -147,6 +154,10 @@ $(document).ready(function() {
                         };
                     })
                 };
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX Error:', xhr.responseText);
+                return { results: [] };
             },
             cache: true
         }
