@@ -150,6 +150,12 @@
                                                 Ready: {{ $pegawais->count() }} pegawai tersedia
                                             </small>
                                         </div>
+                                        
+                                        <!-- Test debug -->
+                                        <div class="mt-2 border p-2 bg-light">
+                                            <small><strong>DEBUG:</strong></small><br>
+                                            <small id="test_debug">JavaScript status: Waiting...</small>
+                                        </div>
                                     </div>
                                     @error('pegawai_ids')
                                         <div class="invalid-feedback d-block">{{ $message }}</div>
@@ -180,133 +186,75 @@
 
 @push('scripts')
 <script>
-// Initializepegawai selector when DOM is ready
+console.log('🚀 SCRIPT LOADED - Starting pegawai selector');
+
+// VERY SIMPLE implementation
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🔥 Pegawai selector initializing...');
+    console.log('✅ DOM Loaded');
     
-    const selectedIds = new Set();
-    const selectedData = new Map(); // Store full employee data
-    
-    // Get DOM elements
+    const testDebug = document.getElementById('test_debug');
     const searchInput = document.getElementById('pegawai_search');
     const pegawaiList = document.getElementById('pegawai_list');
-    const selectedDisplay = document.getElementById('selected_display');
-    const selectedEmpty = document.getElementById('selected_empty');
-    const selectedItems = document.getElementById('selected_items');
-    const hiddenInput = document.getElementById('pegawai_ids_data');
-    const debugInfo = document.getElementById('debug_info');
     
-    // Check if elements exist
-    if (!searchInput || !pegawaiList || !selectedDisplay || !hiddenInput) {
-        console.error('❌ Required DOM elements not found');
+    // Test basic elements
+    if (!testDebug || !searchInput || !pegawaiList) {
+        console.error('❌ Missing elements', {testDebug, searchInput, pegawaiList});
+        if (testDebug) testDebug.innerHTML = 'ERROR: Missing DOM elements';
         return;
     }
     
-    console.log('✅ DOM elements found');
+    testDebug.innerHTML = '✅ Elements found, starting...';
     
-    // Pegawai search functionality
-    searchInput.addEventListener('input', function() {
-        const searchTerm = this.value.toLowerCase().trim();
-        const items = document.querySelectorAll('.pegawai-item');
-        
-        console.log('🔍 searching for:', searchTerm);
-        
-        let visibleCount = 0;
-        items.forEach(item => {
-            const name = item.dataset.name ? item.dataset.name.toLowerCase() : '';
-            const nip = item.dataset.nip ? item.dataset.nip.toLowerCase() : '';
-            const text = name + ' ' + nip;
+    const items = document.querySelectorAll('.pegawai-item');
+    console.log('📊 Found pegawai items:', items.length);
+    
+    items.forEach(item => {
+        console.log('Item:', {
+            id: item.dataset.id,
+            name: item.dataset.name,
+            nip: item.dataset.nip
+        });
+    });
+    
+    // Basic search
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            console.log('🔍 Searching:', this.value);
             
-            if (text.includes(searchTerm) || searchTerm === '') {
-                item.style.display = 'block';
-                visibleCount++;
+            items.forEach(item => {
+                const name = item.dataset.name || '';
+                const nip = item.dataset.nip || '';
+                const search = this.value.toLowerCase();
+                
+                if (name.toLowerCase().includes(search) || nip.toLowerCase().includes(search)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    }
+    
+    // Simple click handlers
+    items.forEach(item => {
+        item.addEventListener('click', function() {
+            const id = this.dataset.id;
+            const name = this.dataset.name;
+            console.log('👆 Clicked:', {id, name});
+            
+            // Simple toggle
+            if (this.style.backgroundColor && this.style.backgroundColor !== 'transparent') {
+                this.style.backgroundColor = 'transparent';
+                this.querySelector('i').className = 'fas fa-plus-circle text-muted';
             } else {
-                item.style.display = 'none';
+                this.style.backgroundColor = '#e3f2fd';
+                this.querySelector('i').className = 'fas fa-check-circle text-success';
             }
         });
-        
-        // Update debug info
-        if (debugInfo) {
-            debugInfo.textContent = searchTerm ? `Menampilkan ${visibleCount} hasil` : `Ready: ${items.length} pegawai tersedia`;
-        }
     });
     
-    // Pegawai selection - delegate to parent for dynamic content
-    pegawaiList.addEventListener('click', function(e) {
-        const item = e.target.closest('.pegawai-item');
-        if (item && item.dataset.id) {
-            handlePegawaiClick(item);
-        }
-    });
-    
-    function handlePegawaiClick(item) {
-        const id = item.dataset.id;
-        const name = item.dataset.name;
-        const nip = item.dataset.nip;
-        
-        console.log('👆 Clicked pegawai:', {id, name, nip});
-        
-        if (selectedIds.has(id)) {
-            // Remove selection
-            selectedIds.delete(id);
-            selectedData.delete(id);
-            item.style.backgroundColor = 'transparent';
-            item.querySelector('i').className = 'fas fa-plus-circle text-muted';
-        } else {
-            // Add selection
-            selectedIds.add(id);
-            selectedData.set(id, {name, nip});
-            item.style.backgroundColor = '#e3f2fd';
-            item.querySelector('i').className = 'fas fa-check-circle text-success';
-        }
-        
-        updateSelectedDisplay();
-    }
-    
-    function updateSelectedDisplay() {
-        console.log('📝 Updating display, selected count:', selectedIds.size);
-        
-        if (selectedIds.size === 0) {
-            selectedEmpty.classList.remove('d-none');
-            selectedItems.classList.add('d-none');
-            hiddenInput.value = '';
-        } else {
-            selectedEmpty.classList.add('d-none');
-            selectedItems.classList.remove('d-none');
-            
-            let html = '<div><strong>Pegawai Dipilih (' + selectedIds.size + '):</strong></div><div class="mt-2">';
-            selectedData.forEach((data, id) => {
-                html += `<div class="d-inline-block m-1">
-                    <span class="badge bg-primary text-white" style="cursor: pointer;" onclick="removePegawai('${id}')" title="Klik untuk hapus">
-                        <i class="fas fa-user"></i> ${data.name} (NIP: ${data.nip})
-                        <i class="fas fa-times ms-1"></i>
-                    </span>
-                </div>`;
-            });
-            html += '</div>';
-            selectedItems.innerHTML = html;
-            hiddenInput.value = Array.from(selectedIds).join(',');
-        }
-        
-        console.log('💾 Hidden input value:', hiddenInput.value);
-    }
-    
-    // Global function to remove pegawai
-    window.removePegawai = function(id) {
-        console.log('🗑️ Removing pegawai:', id);
-        
-        selectedIds.delete(id);
-        selectedData.delete(id);
-        
-        const item = document.querySelector(`.pegawai-item[data-id="${id}"]`);
-        if (item) {
-            handlePegawaiClick(item); // This will reset the visual state
-        }
-        
-        updateSelectedDisplay();
-    };
-    
-    console.log('✅ Pegawai selector initialized successfully');
+    testDebug.innerHTML = `✅ READY: ${items.length} pegawai items found! Search and click enabled.`;
+    console.log('✅ Pegawai selector READY');
 });
 </script>
 @endpush
