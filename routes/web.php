@@ -65,6 +65,15 @@ Route::middleware('auth')->group(function () {
         return response()->json(['token' => csrf_token()]);
     });
     
+    // Simple test endpoint
+    Route::get('/test-submit', function() {
+        return response()->json([
+            'success' => true,
+            'message' => 'Route test working!',
+            'timestamp' => now()
+        ]);
+    });
+    
     // Admin Routes with RBAC protection - TEMP DISABLED FOR DEBUG
     Route::prefix('admin')->name('admin.')->middleware([])->group(function () {
         
