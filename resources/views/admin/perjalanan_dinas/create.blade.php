@@ -184,9 +184,11 @@
 </div>
 @endsection
 
-@push('scripts')
 <script>
-console.log('🚀 SCRIPT LOADED - Starting pegawai selector');
+// DIRECT SCRIPT - Test if this loads
+console.log('🚀 DIRECT SCRIPT LOADED');
+alert('DIRECT SCRIPT LOADED! Testing...');
+document.getElementById('test_debug').innerHTML = '✅ Direct script loaded successfully!';
 
 // VERY SIMPLE implementation
 document.addEventListener('DOMContentLoaded', function() {
@@ -257,4 +259,3 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('✅ Pegawai selector READY');
 });
 </script>
-@endpush
