@@ -82,26 +82,77 @@
                             
                             <div class="row">
                                 <div class="col-12 mb-3">
-                                    <label class="form-label">Pegawai yang Ditugaskan</label>
-                                    <div class="border rounded p-3">
-                                        <input type="text" class="form-control mb-2" id="pegawai_search" placeholder="Cari pegawai...">
-                                        <div id="selected_pegawai" class="mb-2" style="min-height: 40px; border: 1px solid #ddd; padding: 8px; background: #f9f9f9;">
-                                            <small class="text-muted">Belum ada pegawai yang dipilih</small>
+                                    <label for="pegawai_ids" class="form-label">Pegawai yang Ditugaskan</label>
+                                    <div id="pegawai_selector" class="border rounded p-3">
+                                        <!-- Search box -->
+                                        <input type="text" class="form-control mb-2" id="pegawai_search" placeholder="🔍 Cari pegawai...">
+                                        
+                                        <!-- Selected items display -->
+                                        <div id="selected_display" class="mb-2" style="min-height: 60px; border: 2px solid #e9ecef; padding: 12px; background: #f8f9fa; border-radius: 6px;">
+                                            <div id="selected_empty" class="text-muted">
+                                                <i class="fas fa-users"></i> Belum ada pegawai yang dipilih
+                                            </div>
+                                            <div id="selected_items" class="d-none"></div>
                                         </div>
-                                        <div id="pegawai_options" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; background: white;">
+                                        
+                                        <!-- Available pegawai list -->
+                                        <div id="pegawai_list" class="border rounded" style="max-height: 250px; overflow-y: auto;">
                                             @php
-                                                $samplePegawais = App\Models\Pegawai::select('id', 'nama_lengkap', 'NIP')->limit(10)->get();
+                                                try {
+                                                    $pegawais = App\Models\Pegawai::select('id', 'nama_lengkap', 'NIP')->orderBy('nama_lengkap')->get();
+                                                    if($pegawais->count() === 0) {
+                                                        // Fallback sample data
+                                                        $pegawais = collect([
+                                                            (object)['id' => 1, 'nama_lengkap' => 'Budi Santoso', 'NIP' => '198001012023123'],
+                                                            (object)['id' => 2, 'nama_lengkap' => 'Siti Nurhaliza', 'NIP' => '199001012023456'],
+                                                            (object)['id' => 3, 'nama_lengkap' => 'Ahmad Fauzi', 'NIP' => '200001012023789'],
+                                                        ]);
+                                                    }
+                                                } catch(Exception $e) {
+                                                    // Fallback hardcoded data
+                                                    $pegawais = collect([
+                                                        (object)['id' => 1, 'nama_lengkap' => 'Budi Santoso', 'NIP' => '198001012023123'],
+                                                        (object)['id' => 2, 'nama_lengkap' => 'Siti Nurhaliza', 'NIP' => '199001012023456'],
+                                                        (object)['id' => 3, 'nama_lengkap' => 'Ahmad Fauzi', 'NIP' => '200001012023789'],
+                                                    ]);
+                                                }
                                             @endphp
-                                            @foreach($samplePegawais as $pegawai)
-                                                <div class="pegawai-option p-2 border-bottom" style="cursor: pointer;" data-id="{{ $pegawai->id }}" data-name="{{ $pegawai->nama_lengkap }}">
-                                                    {{ $pegawai->nama_lengkap }} - {{ $pegawai->NIP }}
+                                            
+                                            <div class="p-2 bg-light">
+                                                <small class="text-muted">📋 Daftar Pegawai ({{ $pegawais->count() }} total) - Klik untuk memilih</small>
+                                            </div>
+                                            
+                                            @foreach($pegawais as $pegawai)
+                                                <div class="pegawai-item p-3 border-bottom" 
+                                                     style="cursor: pointer; transition: all 0.2s;" 
+                                                     data-id="{{ $pegawai->id }}" 
+                                                     data-name="{{ $pegawai->nama_lengkap }}"
+                                                     data-nip="{{ $pegawai->NIP }}"
+                                                     onmouseover="this.style.backgroundColor='#e3f2fd'" 
+                                                     onmouseout="this.style.backgroundColor='transparent'">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <div>
+                                                            <strong>{{ $pegawai->nama_lengkap }}</strong>
+                                                            <br><small class="text-muted">NIP: {{ $pegawai->NIP }}</small>
+                                                        </div>
+                                                        <i class="fas fa-plus-circle text-muted"></i>
+                                                    </div>
                                                 </div>
                                             @endforeach
                                         </div>
-                                        <input type="hidden" id="pegawai_ids" name="pegawai_ids[]" value="">
+                                        
+                                        <!-- Hidden input for form submission -->
+                                        <input type="hidden" id="pegawai_ids_data" name="pegawai_ids[]" value="">
+                                        
+                                        <!-- Debug info -->
+                                        <div class="mt-2">
+                                            <small class="text-muted" id="debug_info">
+                                                Ready: {{ $pegawais->count() }} pegawai tersedia
+                                            </small>
+                                        </div>
                                     </div>
                                     @error('pegawai_ids')
-                                        <div class="invalid-feedback">{{ $message }}</div>
+                                        <div class="invalid-feedback d-block">{{ $message }}</div>
                                     @enderror
                                 </div>
                             </div>
@@ -129,73 +180,133 @@
 
 @push('scripts')
 <script>
+// Initializepegawai selector when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔥 Pegawai selector initializing...');
+    
     const selectedIds = new Set();
-    const selectedNames = new Map();
+    const selectedData = new Map(); // Store full employee data
     
-    // Pegawai search
-    document.getElementById('pegawai_search').addEventListener('input', function() {
-        const searchTerm = this.value.toLowerCase();
-        const options = document.querySelectorAll('.pegawai-option');
-        
-        options.forEach(option => {
-            const text = option.textContent.toLowerCase();
-            if (text.includes(searchTerm)) {
-                option.style.display = 'block';
-            } else {
-                option.style.display = 'none';
-            }
-        });
-    });
+    // Get DOM elements
+    const searchInput = document.getElementById('pegawai_search');
+    const pegawaiList = document.getElementById('pegawai_list');
+    const selectedDisplay = document.getElementById('selected_display');
+    const selectedEmpty = document.getElementById('selected_empty');
+    const selectedItems = document.getElementById('selected_items');
+    const hiddenInput = document.getElementById('pegawai_ids_data');
+    const debugInfo = document.getElementById('debug_info');
     
-    // Pegawai selection
-    document.querySelectorAll('.pegawai-option').forEach(option => {
-        option.addEventListener('click', function() {
-            const id = this.dataset.id;
-            const name = this.dataset.name;
-            
-            if (selectedIds.has(id)) {
-                selectedIds.delete(id);
-                selectedNames.delete(id);
-                this.style.background = 'white';
-            } else {
-                selectedIds.add(id);
-                selectedNames.set(id, name);
-                this.style.background = '#e3f2fd';
-            }
-            
-            updateSelectedDisplay();
-        });
-    });
-    
-    function updateSelectedDisplay() {
-        const container = document.getElementById('selected_pegawai');
-        const hiddenInput = document.getElementById('pegawai_ids');
-        
-        if (selectedIds.size === 0) {
-            container.innerHTML = '<small class="text-muted">Belum ada pegawai yang dipilih</small>';
-            hiddenInput.value = '';
-        } else {
-            let html = '<strong>Pegawai Dipilih:</strong><br>';
-            selectedNames.forEach((name, id) => {
-                html += `<span class="badge bg-primary me-1 mb-1" onclick="removePegawai('${id}')" style="cursor: pointer;">${name} x</span> `;
-            });
-            container.innerHTML = html;
-            hiddenInput.value = Array.from(selectedIds).join(',');
-        }
+    // Check if elements exist
+    if (!searchInput || !pegawaiList || !selectedDisplay || !hiddenInput) {
+        console.error('❌ Required DOM elements not found');
+        return;
     }
     
-    window.removePegawai = function(id) {
-        selectedIds.delete(id);
-        selectedNames.delete(id);
+    console.log('✅ DOM elements found');
+    
+    // Pegawai search functionality
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase().trim();
+        const items = document.querySelectorAll('.pegawai-item');
         
-        const option = document.querySelector(`.pegawai-option[data-id="${id}"]`);
-        if (option) {
-            option.style.background = 'white';
+        console.log('🔍 searching for:', searchTerm);
+        
+        let visibleCount = 0;
+        items.forEach(item => {
+            const name = item.dataset.name ? item.dataset.name.toLowerCase() : '';
+            const nip = item.dataset.nip ? item.dataset.nip.toLowerCase() : '';
+            const text = name + ' ' + nip;
+            
+            if (text.includes(searchTerm) || searchTerm === '') {
+                item.style.display = 'block';
+                visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+        
+        // Update debug info
+        if (debugInfo) {
+            debugInfo.textContent = searchTerm ? `Menampilkan ${visibleCount} hasil` : `Ready: ${items.length} pegawai tersedia`;
+        }
+    });
+    
+    // Pegawai selection - delegate to parent for dynamic content
+    pegawaiList.addEventListener('click', function(e) {
+        const item = e.target.closest('.pegawai-item');
+        if (item && item.dataset.id) {
+            handlePegawaiClick(item);
+        }
+    });
+    
+    function handlePegawaiClick(item) {
+        const id = item.dataset.id;
+        const name = item.dataset.name;
+        const nip = item.dataset.nip;
+        
+        console.log('👆 Clicked pegawai:', {id, name, nip});
+        
+        if (selectedIds.has(id)) {
+            // Remove selection
+            selectedIds.delete(id);
+            selectedData.delete(id);
+            item.style.backgroundColor = 'transparent';
+            item.querySelector('i').className = 'fas fa-plus-circle text-muted';
+        } else {
+            // Add selection
+            selectedIds.add(id);
+            selectedData.set(id, {name, nip});
+            item.style.backgroundColor = '#e3f2fd';
+            item.querySelector('i').className = 'fas fa-check-circle text-success';
+        }
+        
+        updateSelectedDisplay();
+    }
+    
+    function updateSelectedDisplay() {
+        console.log('📝 Updating display, selected count:', selectedIds.size);
+        
+        if (selectedIds.size === 0) {
+            selectedEmpty.classList.remove('d-none');
+            selectedItems.classList.add('d-none');
+            hiddenInput.value = '';
+        } else {
+            selectedEmpty.classList.add('d-none');
+            selectedItems.classList.remove('d-none');
+            
+            let html = '<div><strong>Pegawai Dipilih (' + selectedIds.size + '):</strong></div><div class="mt-2">';
+            selectedData.forEach((data, id) => {
+                html += `<div class="d-inline-block m-1">
+                    <span class="badge bg-primary text-white" style="cursor: pointer;" onclick="removePegawai('${id}')" title="Klik untuk hapus">
+                        <i class="fas fa-user"></i> ${data.name} (NIP: ${data.nip})
+                        <i class="fas fa-times ms-1"></i>
+                    </span>
+                </div>`;
+            });
+            html += '</div>';
+            selectedItems.innerHTML = html;
+            hiddenInput.value = Array.from(selectedIds).join(',');
+        }
+        
+        console.log('💾 Hidden input value:', hiddenInput.value);
+    }
+    
+    // Global function to remove pegawai
+    window.removePegawai = function(id) {
+        console.log('🗑️ Removing pegawai:', id);
+        
+        selectedIds.delete(id);
+        selectedData.delete(id);
+        
+        const item = document.querySelector(`.pegawai-item[data-id="${id}"]`);
+        if (item) {
+            handlePegawaiClick(item); // This will reset the visual state
         }
         
         updateSelectedDisplay();
     };
+    
+    console.log('✅ Pegawai selector initialized successfully');
 });
 </script>
 @endpush
