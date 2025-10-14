@@ -5,14 +5,35 @@
 @push('page-css')
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
 <style>
-/* Fallback styling if Select2 fails */
+/* Force Select2 visibility */
 .select2-container {
     width: 100% !important;
+    position: relative !important;
+    z-index: 9999 !important;
 }
 .select2-container .select2-selection--multiple {
-    min-height: 38px;
-    border: 1px solid #ced4da;
-    border-radius: 0.375rem;
+    min-height: 38px !important;
+    border: 1px solid #ced4da !important;
+    border-radius: 0.375rem !important;
+    background: white !important;
+}
+.select2-container .select2-selection--multiple .select2-selection__rendered {
+    padding: 0.375rem 0.75rem !important;
+}
+.select2-dropdown {
+    z-index: 99999 !important;
+    border: 1px solid #ced4da !important;
+    border-radius: 0.375rem !important;
+    box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,.075) !important;
+}
+.select2-container--focus .select2-selection--multiple {
+    border-color: #86b7fe !important;
+    outline: 0 !important;
+    box-shadow: 0 0 0 0.25rem rgba(13,110,253,.25) !important;
+}
+/* Hide original select after Select2 initialization */
+.select2-container ~ select {
+    display: none !important;
 }
 </style>
 @endpush
@@ -164,7 +185,7 @@ function delayedSelect2Init() {
 
 function initSelect2Ajax() {
     try {
-        console.log("Initializing Select2...");
+        console.log("=== INITIALIZING SELECT2 ===");
         console.log("jQuery available:", typeof $ !== 'undefined');
         console.log("Select2 available:", $.fn.select2 !== undefined);
 
@@ -174,13 +195,40 @@ function initSelect2Ajax() {
         }
 
         var $select = $('.select2-ajax');
+        console.log("Select element found:", $select.length);
         
         if ($select.length === 0) {
             console.error("Select element not found");
             return;
         }
 
-        // Convert existing options to Select2 data
+        // FIRST: Initialize without data to see if it works
+        console.log("Step 1: Basic initialization...");
+        $select.select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Klik untuk mencari pegawai...',
+            width: '100%',
+            minimumInputLength: 1,
+            allowClear: true,
+            multiple: true
+        });
+
+        console.log("Step 2: Checking if Select2 is visible...");
+        setTimeout(function() {
+            var $container = $select.next('.select2-container');
+            console.log("Select2 container exists:", $container.length > 0);
+            console.log("Select2 container visible:", $container.is(':visible'));
+            console.log("Select2 container CSS:", $container.css(['display', 'visibility', 'z-index']));
+            
+            if ($container.length > 0) {
+                // ADD VISUAL INDICATOR
+                $container.css('border', '3px solid red');
+                console.log("Red border added to Select2 container for visibility test");
+            }
+        }, 100);
+
+        // THEN: Add data and AJAX
+        console.log("Step 3: Adding data and AJAX...");
         var existingOptions = [];
         $select.find('option').each(function() {
             if ($(this).val() !== '') {
@@ -192,10 +240,10 @@ function initSelect2Ajax() {
             }
         });
 
-        // Initialize Select2
-        $select.select2({
+        // Re-initialize with data
+        $select.select2('destroy').select2({
             theme: 'bootstrap-5',
-            dropdownParent: $select.parent(),  // Fix for modal contexts
+            dropdownParent: $select.parent(),
             placeholder: 'Klik untuk mencari pegawai...',
             width: '100%',
             minimumInputLength: 1,
@@ -207,13 +255,13 @@ function initSelect2Ajax() {
                 dataType: 'json',
                 delay: 250,
                 data: function (params) {
-                    console.log('Searching for:', params.term);
+                    console.log('🔍 Searching for:', params.term);
                     return {
                         q: params.term
                     };
                 },
                 processResults: function (data) {
-                    console.log('Search results:', data);
+                    console.log('📊 Search results:', data.length, 'items');
                     if (data.error) {
                         console.error('Search error:', data.error);
                         return { results: [] };
@@ -235,10 +283,10 @@ function initSelect2Ajax() {
             }
         });
 
-        console.log("Select2 initialized successfully");
+        console.log("✅ Select2 initialized successfully with full data");
 
     } catch (error) {
-        console.error('Error initializing Select2:', error);
+        console.error('❌ Error initializing Select2:', error);
     }
 }
 
