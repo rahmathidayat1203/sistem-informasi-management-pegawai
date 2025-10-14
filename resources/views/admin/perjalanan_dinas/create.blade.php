@@ -87,13 +87,18 @@
                                     <select class="form-select select2-ajax @error('pegawai_ids') is-invalid @enderror" id="pegawai_ids" name="pegawai_ids[]" multiple required>
                                         <!-- Add some initial options to show it works -->
                                         @php
-                                            $samplePegawais = App\Models\Pegawai::select('id', 'nama_lengkap', 'NIP')->limit(5)->get();
+                                            $samplePegawais = App\Models\Pegawai::select('id', 'nama_lengkap', 'NIP')->limit(10)->get();
                                         @endphp
                                         @foreach($samplePegawais as $pegawai)
                                             <option value="{{ $pegawai->id }}">{{ $pegawai->nama_lengkap }} - {{ $pegawai->NIP }}</option>
                                         @endforeach
                                     </select>
-                                    <small class="form-text text-muted">Pilih satu atau lebih pegawai untuk ditugaskan. Gunakan fungsi pencarian untuk menemukan pegawai secara cepat.</small>
+                                    <small class="form-text text-muted">
+                                        <i class="fas fa-info-circle"></i> 
+                                        <strong>Catatan:</strong> Pilih satu atau lebih pegawai untuk ditugaskan. 
+                                        Gunakan fungsi pencarian untuk menemukan pegawai secara cepat. 
+                                        Pegawai yang dipilih akan menerima notifikasi (jika memiliki akun user).
+                                    </small>
                                     @error('pegawai_ids')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror

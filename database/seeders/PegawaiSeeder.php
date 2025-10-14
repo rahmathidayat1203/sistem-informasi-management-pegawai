@@ -54,9 +54,7 @@ class PegawaiSeeder extends Seeder
                 'no_telp' => '081234567890',
                 'jabatan_id' => $jabatan1->id,
                 'golongan_id' => $golongan->id,
-                'unit_kerja_id' => $unitKerja->id,
-                'email' => 'budi.santoso@example.com',
-                'username' => 'budi.santoso'
+                'unit_kerja_id' => $unitKerja->id
             ],
             [
                 'NIP' => '199003152012031002',
@@ -69,9 +67,7 @@ class PegawaiSeeder extends Seeder
                 'no_telp' => '082345678901',
                 'jabatan_id' => $jabatan2->id,
                 'golongan_id' => $golongan->id,
-                'unit_kerja_id' => $unitKerja->id,
-                'email' => 'siti.nurhaliza@example.com',
-                'username' => 'siti.nurhaliza'
+                'unit_kerja_id' => $unitKerja->id
             ],
             [
                 'NIP' => '199206252015091003',
@@ -84,39 +80,13 @@ class PegawaiSeeder extends Seeder
                 'no_telp' => '083456789012',
                 'jabatan_id' => $jabatan2->id,
                 'golongan_id' => $golongan->id,
-                'unit_kerja_id' => $unitKerja->id,
-                'email' => 'ahmad.fauzi@example.com',
-                'username' => 'ahmad.fauzi'
+                'unit_kerja_id' => $unitKerja->id
             ]
         ];
         
         foreach ($pegawais as $pegawaiData) {
-            // Extract user data
-            $email = $pegawaiData['email'];
-            $username = $pegawaiData['username'];
-            $fullName = $pegawaiData['nama_lengkap'];
-            
-            // Remove user-only data
-            unset($pegawaiData['email']);
-            unset($pegawaiData['username']);
-            
             // Create pegawai
-            $pegawai = Pegawai::firstOrCreate(['NIP' => $pegawaiData['NIP']], $pegawaiData);
-            
-            // Create user for pegawai
-            if (!$pegawai->user) {
-                $user = User::firstOrCreate(
-                    ['email' => $email],
-                    [
-                        'name' => $fullName,
-                        'username' => $username,
-                        'password' => bcrypt('password'),
-                    ]
-                );
-                
-                // Assign Pegawai role
-                $user->assignRole($pegawaiRole);
-            }
+            Pegawai::firstOrCreate(['NIP' => $pegawaiData['NIP']], $pegawaiData);
         }
     }
 }

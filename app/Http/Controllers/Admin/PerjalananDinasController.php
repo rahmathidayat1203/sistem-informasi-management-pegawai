@@ -94,9 +94,16 @@ class PerjalananDinasController extends Controller
             // Attach pegawai to this perjalanan dinas
             $perjalananDinas->pegawai()->attach($request->pegawai_ids);
 
-            // Send notifications to assigned pegawais
+            // Send notifications to assigned pegawais (only if they have user accounts)
             foreach ($perjalananDinas->pegawai as $pegawai) {
-                $pegawai->user->notify(new PerjalananDinasAssigned($perjalananDinas));
+                if ($pegawai->user) {
+                    try {
+                        $pegawai->user->notify(new PerjalananDinasAssigned($perjalananDinas));
+                    } catch (\Exception $e) {
+                        // Log error but continue - notification is not critical
+                        \Log::warning('Failed to send notification to pegawai ' . $pegawai->id . ': ' . $e->getMessage());
+                    }
+                }
             }
 
             DB::commit();
@@ -268,10 +275,15 @@ class PerjalananDinasController extends Controller
             // Add new assignments
             $perjalananDinas->pegawai()->attach($request->pegawai_ids);
 
-            // Send notifications to assigned pegawais
+            // Send notifications to assigned pegawais (only if they have user accounts)
             foreach ($perjalananDinas->pegawai as $pegawai) {
                 if ($pegawai->user) {
-                    $pegawai->user->notify(new PerjalananDinasAssigned($perjalananDinas));
+                    try {
+                        $pegawai->user->notify(new PerjalananDinasAssigned($perjalananDinas));
+                    } catch (\Exception $e) {
+                        // Log error but continue - notification is not critical
+                        \Log::warning('Failed to send notification to pegawai ' . $pegawai->id . ': ' . $e->getMessage());
+                    }
                 }
             }
 
