@@ -129,17 +129,47 @@
 @endsection
 
 @push('scripts')
+<!-- Ensure jQuery is loaded first -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
 $(document).ready(function() {
+    // Check if Select2 is loaded
+    if ($.fn.select2 === undefined) {
+        console.error("Select2 is not loaded!");
+        console.log("jQuery version:", $.fn.jquery);
+        // Fallback: Hide custom styling and use normal select
+        $('.select2-ajax').css('min-height', '200px');
+        $('.select2-ajax').attr('size', '8');
+        return;
+    }
+
+    // Get existing options and convert to Select2 data
+    $select = $('.select2-ajax');
+    var existingOptions = [];
+    
+    $select.find('option').each(function() {
+        if ($(this).val() !== '') {
+            existingOptions.push({
+                id: $(this).val(),
+                text: $(this).text(),
+                selected: true
+            });
+        }
+    });
+
     // Initialize Select2 for pegawai selection
-    $('.select2-ajax').select2({
+    $select.select2({
+        theme: 'bootstrap-5',
         placeholder: 'Klik untuk mencari pegawai...',
         width: '100%',
         minimumInputLength: 1,
         allowClear: true,
+        multiple: true,
+        data: existingOptions,
         ajax: {
             url: '{{ route("admin.perjalanan_dinas.searchpegawai") }}',
             dataType: 'json',
