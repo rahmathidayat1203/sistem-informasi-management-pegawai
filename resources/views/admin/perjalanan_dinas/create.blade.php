@@ -2,6 +2,21 @@
 
 @section('title', 'Tambah Perjalanan Dinas')
 
+@push('page-css')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+<style>
+/* Fallback styling if Select2 fails */
+.select2-container {
+    width: 100% !important;
+}
+.select2-container .select2-selection--multiple {
+    min-height: 38px;
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+}
+</style>
+@endpush
+
 @section('content')
 <div class="content-wrapper">
     <div class="container-xxl flex-grow-1 container-p-y">
@@ -128,83 +143,107 @@
 </div>
 @endsection
 
+@push('page-css')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+@endpush
+
 @push('scripts')
-<!-- Ensure jQuery is loaded first -->
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
 <script>
-$(document).ready(function() {
-    // Check if Select2 is loaded
-    if ($.fn.select2 === undefined) {
-        console.error("Select2 is not loaded!");
-        console.log("jQuery version:", $.fn.jquery);
-        // Fallback: Hide custom styling and use normal select
-        $('.select2-ajax').css('min-height', '200px');
-        $('.select2-ajax').attr('size', '8');
-        return;
-    }
+// Initialize on window load to ensure all scripts are loaded
+window.addEventListener('load', function() {
+    delayedSelect2Init();
+});
 
-    // Get existing options and convert to Select2 data
-    $select = $('.select2-ajax');
-    var existingOptions = [];
-    
-    $select.find('option').each(function() {
-        if ($(this).val() !== '') {
-            existingOptions.push({
-                id: $(this).val(),
-                text: $(this).text(),
-                selected: true
-            });
+function delayedSelect2Init() {
+    // Wait for DOM to be fully ready
+    setTimeout(function() {
+        initSelect2Ajax();
+    }, 500);
+}
+
+function initSelect2Ajax() {
+    try {
+        console.log("Initializing Select2...");
+        console.log("jQuery available:", typeof $ !== 'undefined');
+        console.log("Select2 available:", $.fn.select2 !== undefined);
+
+        if (typeof $ === 'undefined' || $.fn.select2 === undefined) {
+            console.error("jQuery or Select2 not available");
+            return;
         }
-    });
 
-    // Initialize Select2 for pegawai selection
-    $select.select2({
-        theme: 'bootstrap-5',
-        placeholder: 'Klik untuk mencari pegawai...',
-        width: '100%',
-        minimumInputLength: 1,
-        allowClear: true,
-        multiple: true,
-        data: existingOptions,
-        ajax: {
-            url: '{{ route("admin.perjalanan_dinas.searchpegawai") }}',
-            dataType: 'json',
-            delay: 250,
-            data: function (params) {
-                console.log('Searching for:', params.term);
-                return {
-                    q: params.term
-                };
-            },
-            processResults: function (data) {
-                console.log('Search results:', data);
-                // Handle error response
-                if (data.error) {
-                    console.error('Search error:', data.error);
+        var $select = $('.select2-ajax');
+        
+        if ($select.length === 0) {
+            console.error("Select element not found");
+            return;
+        }
+
+        // Convert existing options to Select2 data
+        var existingOptions = [];
+        $select.find('option').each(function() {
+            if ($(this).val() !== '') {
+                existingOptions.push({
+                    id: $(this).val(),
+                    text: $(this).text(),
+                    selected: true
+                });
+            }
+        });
+
+        // Initialize Select2
+        $select.select2({
+            theme: 'bootstrap-5',
+            dropdownParent: $select.parent(),  // Fix for modal contexts
+            placeholder: 'Klik untuk mencari pegawai...',
+            width: '100%',
+            minimumInputLength: 1,
+            allowClear: true,
+            multiple: true,
+            data: existingOptions,
+            ajax: {
+                url: '{{ route("admin.perjalanan_dinas.searchpegawai") }}',
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    console.log('Searching for:', params.term);
+                    return {
+                        q: params.term
+                    };
+                },
+                processResults: function (data) {
+                    console.log('Search results:', data);
+                    if (data.error) {
+                        console.error('Search error:', data.error);
+                        return { results: [] };
+                    }
+                    return {
+                        results: data.map(function(item) {
+                            return {
+                                id: item.id,
+                                text: item.nama_lengkap + ' - ' + (item.NIP || '')
+                            };
+                        })
+                    };
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', xhr.responseText);
                     return { results: [] };
-                }
-                return {
-                    results: data.map(function(item) {
-                        return {
-                            id: item.id,
-                            text: item.nama_lengkap + ' - ' + (item.NIP || '')
-                        };
-                    })
-                };
-            },
-            error: function(xhr, status, error) {
-                console.error('AJAX Error:', xhr.responseText);
-                return { results: [] };
-            },
-            cache: true
-        }
-    });
+                },
+                cache: true
+            }
+        });
 
-    // Date validation
+        console.log("Select2 initialized successfully");
+
+    } catch (error) {
+        console.error('Error initializing Select2:', error);
+    }
+}
+
+// Date validation
+$(document).ready(function() {
     $('#tgl_berangkat').change(function() {
         var minDate = $(this).val();
         $('#tgl_kembali').attr('min', minDate);
