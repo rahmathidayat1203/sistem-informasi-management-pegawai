@@ -60,6 +60,11 @@ Route::middleware('auth')->group(function () {
         Route::get('pegawai/search', [PerjalananDinasController::class, 'searchPegawai'])->name('perjalanan_dinas.searchpegawai');
     });
 
+    // CSRF Token refresh route (for debugging)
+    Route::get('/csrf-token', function() {
+        return response()->json(['token' => csrf_token()]);
+    });
+    
     // Admin Routes with RBAC protection
     Route::prefix('admin')->name('admin.')->middleware(['role:Admin Kepegawaian|Pimpinan|Admin Keuangan|Pegawai'])->group(function () {
         

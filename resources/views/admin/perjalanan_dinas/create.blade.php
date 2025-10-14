@@ -326,10 +326,42 @@ document.addEventListener('DOMContentLoaded', function() {
     window.selectedItems = selectedItems;
 });
 
+// Refresh CSRF token function
+window.refreshCsrfToken = function() {
+    return fetch('/csrf-token', {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('🔄 CSRF token refreshed:', data.token);
+        
+        // Update all CSRF inputs
+        document.querySelectorAll('input[name="_token"]').forEach(input => {
+            input.value = data.token;
+        });
+        
+        // Update meta tag
+        const metaTag = document.querySelector('meta[name="csrf-token"]');
+        if (metaTag) {
+            metaTag.setAttribute('content', data.token);
+        }
+        
+        return data.token;
+    })
+    .catch(error => {
+        console.error('❌ Failed to refresh CSRF token:', error);
+        throw error;
+    });
+};
+
 // Validation and submit function
 window.validateAndSubmit = function() {
-    const hiddenInput = document.getElementById('pegawai_ids_data');
-    const selectedItemsCount = window.selectedItems ? window.selectedItems.size : 0;
+    return refreshCsrfToken().then(() => {
+        const hiddenInput = document.getElementById('pegawai_ids_data');
+        const selectedItemsCount = window.selectedItems ? window.selectedItems.size : 0;
     
     console.log('🚀 Submit validation:');
     console.log('Hidden input value:', hiddenInput ? hiddenInput.value : 'NOT FOUND');
@@ -337,6 +369,23 @@ window.validateAndSubmit = function() {
     
     if (selectedItemsCount === 0) {
         alert('❌ Error: Harap pilih minimal 1 pegawai! \n\nKlik pada nama pegawai di daftar untuk memilih.');
+        return Promise.reject('No pegawai selected');
+    }
+    
+    // Show confirmation dialog
+    const selectedNames = Array.from(window.selectedItems.values());
+    const confirmMessage = `📋 Konfirmasi Submit:\n\n` +
+        `Pegawai dipilih (${selectedItemsCount}):\n` +
+        `• ${selectedNames.join('\n• ')}\n\n` +
+        `Data yang dipilih benar dan akan disimpan?`;
+    
+    if (!confirm(confirmMessage)) {
+        console.log('❌ Submit cancelled by user');
+        return Promise.reject('User cancelled');
+    }
+    
+    // Continue to submit via the existing code
+    return true;
         
         // Highlight the pegawai section
         const pegawaiSelector = document.getElementById('pegawai_selector');
@@ -434,7 +483,8 @@ window.validateAndSubmit = function() {
                 console.log('🔍 Response is HTML, checking for redirect...');
                 if (data.includes('login') || data.includes('logout')) {
                     alert('❌ Authentication error: Response contains login/logout page!');
-                    alert('This means you are being logged out due to permission/session issues.');
+                    alert('This means CSRF token or session issue.');
+                    alert('🔧 Solution: Try refreshing the page and submitting again.');
                 } else {
                     console.log('✅ HTML response - might be successful redirect');
                     window.location.href = '/admin/perjalanan_dinas';
