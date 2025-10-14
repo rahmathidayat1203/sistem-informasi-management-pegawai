@@ -228,10 +228,17 @@
                                                     
                                                     // Update selected container
                                                     selectedContainer.innerHTML = selectedValues.size > 0 ? 
+                                                        `<div style="margin-bottom: 5px; font-size: 12px; color: #666;">
+                                                            <strong>Pegawai Dipilih (${selectedValues.size}):</strong>
+                                                        </div>` +
                                                         Array.from(selectedLabels.entries()).map(([id, text]) => 
-                                                            `<span style="display: inline-block; background: #007bff; color: white; padding: 4px 8px; margin: 2px; border-radius: 4px; cursor: pointer;" onclick="removeOption('${id}')">${text} ×</span>`
+                                                            `<span style="display: inline-block; background: #007bff; color: white; padding: 4px 8px; margin: 2px; border-radius: 4px; cursor: pointer; font-size: 12px;" title="Klik untuk hapus" onclick="removeOption('${id}')">${text} ×</span>`
                                                         ).join('') : 
-                                                        '<span style="color: #999;">Belum ada pegawai yang dipilih</span>';
+                                                        '<div style="text-align: center; padding: 20px; color: #999; border: 2px dashed #ddd; border-radius: 8px;">
+                                                            <div style="font-size: 16px; margin-bottom: 5px;">📋</div>
+                                                            <div>Belum ada pegawai yang dipilih</div>
+                                                            <div style="font-size: 12px; color: #666;">Klik pada daftar pegawai di bawah untuk memilih</div>
+                                                        </div>';
                                                 }
                                                 
                                                 function removeOption(id) {
@@ -280,7 +287,9 @@
                                                 containerDiv.appendChild(selectedContainer);
                                                 containerDiv.appendChild(optionsContainer);
                                                 containerDiv.appendChild(hiddenInput);
-                                                originalSelect.style.display = 'none';
+                                                
+                                                // Remove original select from DOM completely to avoid form validation issues
+                                                originalSelect.remove();
                                                 
                                                 // Add visual success indicator
                                                 searchBox.style.border = '3px solid lime';
