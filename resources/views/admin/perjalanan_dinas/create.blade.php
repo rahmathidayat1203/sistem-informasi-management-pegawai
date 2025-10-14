@@ -363,11 +363,89 @@ window.validateAndSubmit = function() {
         return;
     }
     
-    // Submit the form
-    console.log('✅ Submitting form...');
+    // Submit the form with AJAX debugging
+    console.log('✅ Submitting form with AJAX debugging...');
     const form = document.querySelector('form');
     if (form) {
-        form.submit();
+        // Check CSRF token
+        const csrfToken = document.querySelector('meta[name="csrf-token"]');
+        const csrfInput = form.querySelector('input[name="_token"]');
+        
+        console.log('🔐 CSRF Debug:');
+        console.log('CSRF meta tag:', csrfToken ? csrfToken.getAttribute('content') : 'NOT FOUND');
+        console.log('CS form input:', csrfInput ? csrfInput.value : 'NOT FOUND');
+        
+        // Create FormData
+        const formData = new FormData(form);
+        
+        // Log all form data
+        console.log('📋 Form data being submitted:');
+        for (let [key, value] of formData.entries()) {
+            console.log(`${key}: ${value}`);
+        }
+        
+        // Add CSRF token to headers
+        const headers = {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        };
+        
+        if (csrfToken) {
+            headers['X-CSRF-TOKEN'] = csrfToken.getAttribute('content');
+        }
+        
+        // Use fetch to see what happens
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: headers
+        })
+        .then(response => {
+            console.log('📡 Response status:', response.status);
+            console.log('📡 Response headers:', response.headers);
+            
+            if (response.redirected) {
+                console.log('🔄 Response redirected to:', response.url);
+                // Check if redirect goes to login page
+                if (response.url.includes('/login') || response.url.includes('logout')) {
+                    alert('❌ ERROR: Form is redirecting to login page! This suggests authentication issue.');
+                    alert(`Debug: Redirecting to: ${response.url}`);
+                    return;
+                }
+            }
+            
+            return response.text(); // Read as text first
+        })
+        .then(data => {
+            console.log('📄 Response data:', data.substring(0, 500)); // First 500 chars
+            
+            // Try parse as JSON if possible
+            try {
+                const jsonData = JSON.parse(data);
+                console.log('🟢 Parsed JSON:', jsonData);
+                
+                if (jsonData.success || jsonData.redirect) {
+                    window.location.href = jsonData.redirect || '/admin/perjalanan_dinas';
+                } else {
+                    alert('Form submitted but unexpected response. Check console.');
+                }
+            } catch (e) {
+                // Not JSON, could be HTML redirect page
+                console.log('🔍 Response is HTML, checking for redirect...');
+                if (data.includes('login') || data.includes('logout')) {
+                    alert('❌ Authentication error: Response contains login/logout page!');
+                    alert('This means you are being logged out due to permission/session issues.');
+                } else {
+                    console.log('✅ HTML response - might be successful redirect');
+                    window.location.href = '/admin/perjalanan_dinas';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('❌ Submit error:', error);
+            alert('❌ Error during form submission: ' + error.message);
+        });
+        
     } else {
         alert('❌ Error: Form tidak ditemukan!');
     }
