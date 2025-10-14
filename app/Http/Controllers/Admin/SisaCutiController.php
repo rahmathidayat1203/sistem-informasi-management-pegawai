@@ -59,8 +59,20 @@ class SisaCutiController extends Controller
             'pegawai_id' => 'required|exists:pegawai,id',
             'tahun' => 'required|integer|min:1900|max:' . (date('Y') + 5), // Tahun masuk akal
             'jatah_cuti' => 'required|integer|min:0',
-            'sisa_cuti' => 'required|integer|min:0|max:jatah_cuti', // Sisa cuti tidak boleh melebihi jatah
+            'sisa_cuti' => 'required|integer|min:0',
         ]);
+
+        // Custom validation: sisa_cuti tidak boleh melebihi jatah_cuti
+        $validator->after(function ($validator) use ($request) {
+            if ($request->has('sisa_cuti') && $request->has('jatah_cuti')) {
+                $sisaCuti = (int) $request->input('sisa_cuti');
+                $jatahCuti = (int) $request->input('jatah_cuti');
+                
+                if ($sisaCuti > $jatahCuti) {
+                    $validator->errors()->add('sisa_cuti', 'Sisa cuti tidak boleh melebihi jatah cuti.');
+                }
+            }
+        });
 
         // Jika validasi gagal, kembali ke halaman create dengan error
         if ($validator->fails()) {
@@ -122,8 +134,20 @@ class SisaCutiController extends Controller
             'pegawai_id' => 'required|exists:pegawai,id',
             'tahun' => 'required|integer|min:1900|max:' . (date('Y') + 5),
             'jatah_cuti' => 'required|integer|min:0',
-            'sisa_cuti' => 'required|integer|min:0|max:jatah_cuti',
+            'sisa_cuti' => 'required|integer|min:0',
         ]);
+
+        // Custom validation: sisa_cuti tidak boleh melebihi jatah_cuti
+        $validator->after(function ($validator) use ($request) {
+            if ($request->has('sisa_cuti') && $request->has('jatah_cuti')) {
+                $sisaCuti = (int) $request->input('sisa_cuti');
+                $jatahCuti = (int) $request->input('jatah_cuti');
+                
+                if ($sisaCuti > $jatahCuti) {
+                    $validator->errors()->add('sisa_cuti', 'Sisa cuti tidak boleh melebihi jatah cuti.');
+                }
+            }
+        });
 
         // Jika validasi gagal, kembali ke halaman edit dengan error
         if ($validator->fails()) {
