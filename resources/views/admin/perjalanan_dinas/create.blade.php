@@ -159,7 +159,7 @@
                                                 const searchBox = document.createElement('input');
                                                 searchBox.type = 'text';
                                                 searchBox.className = 'form-control';
-                                                searchBox.placeholder = '🔍 Ketik untuk mencari pegawai...';
+                                                searchBox.placeholder = '🔍 Cari pegawai (ketik untuk filter)...';
                                                 searchBox.style.cssText = 'margin-bottom: 10px; border: 2px solid #ced4da; border-radius: 8px; padding: 10px;';
                                                 
                                                 // Selected items container
@@ -167,10 +167,10 @@
                                                 selectedContainer.className = 'selected-items';
                                                 selectedContainer.style.cssText = 'min-height: 80px; border: 2px solid #ced4da; border-radius: 8px; padding: 10px; background: white; margin-bottom: 10px;';
                                                 
-                                                // Options container (for selection)
+                                                // Options container (for selection) - initially shown
                                                 const optionsContainer = document.createElement('div');
                                                 optionsContainer.className = 'options-container';
-                                                optionsContainer.style.cssText = 'max-height: 300px; overflow-y: auto; border: 2px solid #ced4da; border-radius: 8px; background: white; display: none;';
+                                                optionsContainer.style.cssText = 'max-height: 300px; overflow-y: auto; border: 2px solid #ced4da; border-radius: 8px; background: white; display: block;';
                                                 
                                                 // Get existing options
                                                 const existingOptions = [];
@@ -181,15 +181,28 @@
                                                     }
                                                 @endphp
                                                 
+                                                // Add header
+                                                const headerDiv = document.createElement('div');
+                                                headerDiv.id = 'header';
+                                                headerDiv.style.cssText = 'padding: 10px; background: #007bff; color: white; font-weight: bold; position: sticky; top: 0; z-index: 10;';
+                                                headerDiv.textContent = '📋 Daftar Pegawai (Klik untuk memilih)';
+                                                optionsContainer.appendChild(headerDiv);
+
                                                 // Populate options
                                                 existingOptions.forEach(option => {
                                                     const optionDiv = document.createElement('div');
                                                     optionDiv.className = 'option-item';
-                                                    optionDiv.style.cssText = 'padding: 8px; border-bottom: 1px solid #eee; cursor: pointer; background: white;';
+                                                    optionDiv.style.cssText = 'padding: 10px 8px; border-bottom: 1px solid #eee; cursor: pointer; background: white; transition: all 0.2s;';
                                                     optionDiv.dataset.id = option.id;
                                                     optionDiv.textContent = option.text;
-                                                    optionDiv.onmouseover = function() { this.style.background = '#f0f8ff'; };
-                                                    optionDiv.onmouseout = function() { this.style.background = 'white'; };
+                                                    optionDiv.onmouseover = function() { 
+                                                        this.style.background = '#e3f2fd'; 
+                                                        this.style.transform = 'translateX(5px)';
+                                                    };
+                                                    optionDiv.onmouseout = function() { 
+                                                        this.style.background = 'white'; 
+                                                        this.style.transform = 'translateX(0)';
+                                                    };
                                                     optionDiv.onclick = function() { toggleOption(option.id, option.text); };
                                                     optionsContainer.appendChild(optionDiv);
                                                 });
@@ -231,19 +244,31 @@
                                                 searchBox.oninput = function() {
                                                     const searchTerm = this.value.toLowerCase();
                                                     const options = optionsContainer.children;
-                                                    let hasVisible = false;
                                                     
                                                     for (let option of options) {
+                                                        // Skip header
+                                                        if (option.id === 'header') continue;
+                                                        
                                                         const text = option.textContent.toLowerCase();
-                                                        if (text.includes(searchTerm)) {
+                                                        if (text.includes(searchTerm) || searchTerm === '') {
                                                             option.style.display = 'block';
-                                                            hasVisible = true;
                                                         } else {
                                                             option.style.display = 'none';
                                                         }
                                                     }
                                                     
-                                                    optionsContainer.style.display = searchTerm || hasVisible ? 'block' : 'none';
+                                                    // Always show container, but highlight search
+                                                    if (searchTerm) {
+                                                        optionsContainer.style.border = '3px solid #28a745'; // Green when searching
+                                                        const allHidden = Array.from(options).every(option => {
+                                                            if (option.id === 'header') return true; // Header always visible
+                                                            return option.style.display === 'none';
+                                                        });
+                                                        headerDiv.textContent = `📋 ${allHidden ? 'Tidak ada hasil' : existingOptions.filter(o => o.text.toLowerCase().includes(searchTerm)).length} hasil ditemukan`;
+                                                    } else {
+                                                        optionsContainer.style.border = '2px solid #ced4da';
+                                                        headerDiv.textContent = `📋 Daftar Pegawai (${existingOptions.length} total) - Klik untuk memilih`;
+                                                    }
                                                 };
                                                 
                                                 // Make removeOption globally accessible
