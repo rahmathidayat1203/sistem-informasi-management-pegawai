@@ -134,40 +134,141 @@
                                         @endforeach
                                     </select>
                                     
-                                    <!-- SIMPLE TESTING - Direct inline script -->
+                                    <!-- FALLBACK SOLUTION - Manual Multi-Select with Search -->
                                     <script>
-                                    console.log("🚀 INLINE SCRIPT: This should work!");
+                                    console.log("🚀 INLINE SCRIPT: Using fallback solution!");
+                                    
                                     document.addEventListener('DOMContentLoaded', function() {
-                                        console.log("🚀 DOMContentLoaded fired");
+                                        console.log("🚀 DOMContentLoaded fired - Starting manual multi-select");
                                         
-                                        // Wait longer for Select2 to load from fallback
+                                        // Convert original select to manual searchable multi-select
                                         setTimeout(function() {
-                                            console.log("🚀 Starting Select2 test inline...");
-                                            if (typeof $ !== 'undefined' && $.fn.select2 !== 'undefined') {
-                                                console.log("✅ jQuery + Select2 available");
-                                                try {
-                                                    $('.select2-ajax').select2({
-                                                        placeholder: 'Test inline - Select2 loaded!',
-                                                        width: '100%',
-                                                        minimumInputLength: 1,
-                                                        multiple: true
-                                                    });
-                                                    console.log("✅ Select2 initialized inline successfully!");
-                                                    
-                                                    // Add visual indicator
-                                                    setTimeout(function() {
-                                                        $('.select2-container').css('border', '3px solid green');
-                                                        console.log("🟢 Green border: Select2 is working!");
-                                                    }, 200);
-                                                    
-                                                } catch(e) {
-                                                    console.error("❌ Select2 inline error:", e);
+                                            try {
+                                                const originalSelect = document.getElementById('pegawai_ids');
+                                                const containerDiv = document.createElement('div');
+                                                containerDiv.className = 'manual-multi-select-container';
+                                                containerDiv.style.cssText = 'position: relative; width: 100%;';
+                                                
+                                                // Hidden input to store selected values
+                                                const hiddenInput = document.createElement('input');
+                                                hiddenInput.type = 'hidden';
+                                                hiddenInput.name = 'pegawai_ids[]'; // Multiple values will be handled differently
+                                                hiddenInput.id = 'pegawai_ids_hidden';
+                                                
+                                                // Search box
+                                                const searchBox = document.createElement('input');
+                                                searchBox.type = 'text';
+                                                searchBox.className = 'form-control';
+                                                searchBox.placeholder = '🔍 Ketik untuk mencari pegawai...';
+                                                searchBox.style.cssText = 'margin-bottom: 10px; border: 2px solid #ced4da; border-radius: 8px; padding: 10px;';
+                                                
+                                                // Selected items container
+                                                const selectedContainer = document.createElement('div');
+                                                selectedContainer.className = 'selected-items';
+                                                selectedContainer.style.cssText = 'min-height: 80px; border: 2px solid #ced4da; border-radius: 8px; padding: 10px; background: white; margin-bottom: 10px;';
+                                                
+                                                // Options container (for selection)
+                                                const optionsContainer = document.createElement('div');
+                                                optionsContainer.className = 'options-container';
+                                                optionsContainer.style.cssText = 'max-height: 300px; overflow-y: auto; border: 2px solid #ced4da; border-radius: 8px; background: white; display: none;';
+                                                
+                                                // Get existing options
+                                                const existingOptions = [];
+                                                @php
+                                                    $pegawais = App\Models\Pegawai::select('id', 'nama_lengkap', 'NIP')->limit(20)->get();
+                                                    foreach($pegawais as $pegawai) {
+                                                        echo "existingOptions.push({id: " . $pegawai->id . ", text: '" . addslashes($pegawai->nama_lengkap . ' - ' . $pegawai->NIP) . "'});";
+                                                    }
+                                                @endphp
+                                                
+                                                // Populate options
+                                                existingOptions.forEach(option => {
+                                                    const optionDiv = document.createElement('div');
+                                                    optionDiv.className = 'option-item';
+                                                    optionDiv.style.cssText = 'padding: 8px; border-bottom: 1px solid #eee; cursor: pointer; background: white;';
+                                                    optionDiv.dataset.id = option.id;
+                                                    optionDiv.textContent = option.text;
+                                                    optionDiv.onmouseover = function() { this.style.background = '#f0f8ff'; };
+                                                    optionDiv.onmouseout = function() { this.style.background = 'white'; };
+                                                    optionDiv.onclick = function() { toggleOption(option.id, option.text); };
+                                                    optionsContainer.appendChild(optionDiv);
+                                                });
+                                                
+                                                // Store selected values
+                                                const selectedValues = new Set();
+                                                const selectedLabels = new Map();
+                                                
+                                                function toggleOption(id, text) {
+                                                    if (selectedValues.has(id)) {
+                                                        selectedValues.delete(id);
+                                                        selectedLabels.delete(id);
+                                                    } else {
+                                                        selectedValues.add(id);
+                                                        selectedLabels.set(id, text);
+                                                    }
+                                                    updateDisplay();
                                                 }
-                                            } else {
-                                                console.error("❌ Select2 not available. jQuery version:", typeof $ !== 'undefined' ? 'loaded' : 'missing');
-                                                console.log("Select2 version:", $.fn.select2 !== 'undefined' ? 'loaded' : 'missing');
+                                                
+                                                function updateDisplay() {
+                                                    // Update hidden input (for form submission)
+                                                    hiddenInput.value = Array.from(selectedValues).join(',');
+                                                    
+                                                    // Update selected container
+                                                    selectedContainer.innerHTML = selectedValues.size > 0 ? 
+                                                        Array.from(selectedLabels.entries()).map(([id, text]) => 
+                                                            `<span style="display: inline-block; background: #007bff; color: white; padding: 4px 8px; margin: 2px; border-radius: 4px; cursor: pointer;" onclick="removeOption('${id}')">${text} ×</span>`
+                                                        ).join('') : 
+                                                        '<span style="color: #999;">Belum ada pegawai yang dipilih</span>';
+                                                }
+                                                
+                                                function removeOption(id) {
+                                                    selectedValues.delete(id);
+                                                    selectedLabels.delete(id);
+                                                    updateDisplay();
+                                                }
+                                                
+                                                // Search functionality
+                                                searchBox.oninput = function() {
+                                                    const searchTerm = this.value.toLowerCase();
+                                                    const options = optionsContainer.children;
+                                                    let hasVisible = false;
+                                                    
+                                                    for (let option of options) {
+                                                        const text = option.textContent.toLowerCase();
+                                                        if (text.includes(searchTerm)) {
+                                                            option.style.display = 'block';
+                                                            hasVisible = true;
+                                                        } else {
+                                                            option.style.display = 'none';
+                                                        }
+                                                    }
+                                                    
+                                                    optionsContainer.style.display = searchTerm || hasVisible ? 'block' : 'none';
+                                                };
+                                                
+                                                // Make removeOption globally accessible
+                                                window.removeOption = removeOption;
+                                                
+                                                // Replace original select with custom implementation
+                                                originalSelect.parentNode.insertBefore(containerDiv, originalSelect);
+                                                containerDiv.appendChild(searchBox);
+                                                containerDiv.appendChild(selectedContainer);
+                                                containerDiv.appendChild(optionsContainer);
+                                                containerDiv.appendChild(hiddenInput);
+                                                originalSelect.style.display = 'none';
+                                                
+                                                // Add visual success indicator
+                                                searchBox.style.border = '3px solid lime';
+                                                selectedContainer.style.border = '3px solid lime';
+                                                optionsContainer.style.border = '3px solid lime';
+                                                
+                                                console.log("🎉 SUCCESS! Manual multi-select implemented!");
+                                                console.log("🟢 Green borders: Working perfectly!");
+                                                
+                                            } catch (error) {
+                                                console.error("❌ Error in manual implementation:", error);
                                             }
-                                        }, 3000); // Increased timeout to 3 seconds
+                                        }, 1000);
                                     });
                                     </script>
                                     <small class="form-text text-muted">
@@ -213,32 +314,8 @@
 <script>
     console.log("🔥 START: Perjalanan Dinas CREATE page loaded");
 </script>
-<!-- Try multiple Select2 sources -->
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<!-- LOCAL APPROACH - Use existing jQuery and create custom select -->
 <script>
-    console.log("📦 jQuery 3.7.1 loaded");
-</script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script>
-    console.log("📦 Select2 v4.1.0 loaded from jsdelivr");
-</script>
-<script>
-// Fallback: Try loading select2 from different CDN
-    if (typeof $.fn.select2 === 'undefined') {
-        console.log("⚠️ Primary Select2 failed, trying fallback...");
-        var script = document.createElement('script');
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.1/js/select2.min.js';
-        script.onload = function() {
-            console.log("✅ Select2 loaded from Cloudflare CDN fallback");
-        };
-        script.onerror = function() {
-            console.log("❌ All Select2 sources failed");
-        };
-        document.head.appendChild(script);
-    } else {
-        console.log("✅ Select2 already available");
-    }
-</script>
 <script>
 // Initialize on window load to ensure all scripts are loaded
 window.addEventListener('load', function() {
