@@ -12,6 +12,7 @@
                     <div class="card-body">
                         <form action="{{ route('admin.perjalanan_dinas.store') }}" method="POST">
                             @csrf
+                            @csrf
                             
                             <div class="row">
                                 <div class="col-md-6 mb-3">

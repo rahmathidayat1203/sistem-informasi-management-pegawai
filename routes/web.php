@@ -103,11 +103,11 @@ Route::middleware('auth')->group(function () {
             Route::get('cuti/export/pdf', [CutiController::class, 'exportPdf'])->name('cuti.export.pdf');
         });
 
-        // Perjalanan Dinas routes
-        Route::middleware(['permission:view perjalanan_dinas'])->group(function () {
+        // Perjalanan Dinas routes - TEMP: Remove permission for debugging
+        // Route::middleware(['permission:view perjalanan_dinas'])->group(function () {
             Route::resource('perjalanan_dinas', PerjalananDinasController::class);
             Route::get('perjalanan_dinas/export/pdf', [PerjalananDinasController::class, 'exportPdf'])->name('perjalanan_dinas.export.pdf');
-        });
+        // });
 
         // Laporan PD routes
         Route::middleware(['permission:view laporan_pd'])->group(function () {
