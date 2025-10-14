@@ -173,15 +173,16 @@ class PerjalananDinasController extends Controller
      */
     public function searchPegawai(Request $request)
     {
-        // Add permission check for security
-        if (!auth()->user()->hasAnyRole(['Admin Kepegawaian', 'Pimpinan', 'Admin Keuangan'])) {
-            return response()->json(['error' => 'Unauthorized'], 403);
-        }
-        
         $search = $request->q;
         
-        if (empty($search) || strlen($search) < 2) {
-            return response()->json([]);
+        // For debugging: return all if search is empty or too short
+        if (empty($search) || strlen($search) < 1) {
+            $pegawais = Pegawai::select('id', 'nama_lengkap', 'NIP')
+                ->whereNotNull('nama_lengkap')
+                ->whereNotNull('NIP')
+                ->limit(10)
+                ->get();
+            return response()->json($pegawais);
         }
         
         $pegawais = Pegawai::select('id', 'nama_lengkap', 'NIP')

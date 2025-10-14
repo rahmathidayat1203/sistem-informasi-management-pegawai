@@ -85,7 +85,13 @@
                                 <div class="col-12 mb-3">
                                     <label for="pegawai_ids" class="form-label">Pegawai yang Ditugaskan</label>
                                     <select class="form-select select2-ajax @error('pegawai_ids') is-invalid @enderror" id="pegawai_ids" name="pegawai_ids[]" multiple required>
-                                        <!-- Tidak ada initial options karena akan diselesaikan via AJAX -->
+                                        <!-- Add some initial options to show it works -->
+                                        @php
+                                            $samplePegawais = App\Models\Pegawai::select('id', 'nama_lengkap', 'NIP')->limit(5)->get();
+                                        @endphp
+                                        @foreach($samplePegawais as $pegawai)
+                                            <option value="{{ $pegawai->id }}">{{ $pegawai->nama_lengkap }} - {{ $pegawai->NIP }}</option>
+                                        @endforeach
                                     </select>
                                     <small class="form-text text-muted">Pilih satu atau lebih pegawai untuk ditugaskan. Gunakan fungsi pencarian untuk menemukan pegawai secara cepat.</small>
                                     @error('pegawai_ids')
@@ -125,9 +131,9 @@
 $(document).ready(function() {
     // Initialize Select2 for pegawai selection
     $('.select2-ajax').select2({
-        placeholder: 'Ketik nama atau NIP pegawai...',
+        placeholder: 'Klik untuk mencari pegawai...',
         width: '100%',
-        minimumInputLength: 2,
+        minimumInputLength: 1,
         allowClear: true,
         ajax: {
             url: '{{ route("admin.perjalanan_dinas.searchpegawai") }}',

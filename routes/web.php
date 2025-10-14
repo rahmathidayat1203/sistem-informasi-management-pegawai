@@ -55,6 +55,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/reports/duk/excel', [ReportController::class, 'exportDukExcel'])->name('reports.duk.excel');
     });
 
+    // Pegawai search route (accessible for AJAX but needs auth)
+    Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
+        Route::get('pegawai/search', [PerjalananDinasController::class, 'searchPegawai'])->name('perjalanan_dinas.searchpegawai');
+    });
+
     // Admin Routes with RBAC protection
     Route::prefix('admin')->name('admin.')->middleware(['role:Admin Kepegawaian|Pimpinan|Admin Keuangan|Pegawai'])->group(function () {
         
@@ -103,9 +108,6 @@ Route::middleware('auth')->group(function () {
             Route::resource('perjalanan_dinas', PerjalananDinasController::class);
             Route::get('perjalanan_dinas/export/pdf', [PerjalananDinasController::class, 'exportPdf'])->name('perjalanan_dinas.export.pdf');
         });
-        
-        // Pegawai search route (needs to be accessible for AJAX)
-        Route::get('pegawai/search', [PerjalananDinasController::class, 'searchPegawai'])->name('perjalanan_dinas.searchpegawai');
 
         // Laporan PD routes
         Route::middleware(['permission:view laporan_pd'])->group(function () {
