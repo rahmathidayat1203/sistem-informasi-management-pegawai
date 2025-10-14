@@ -82,7 +82,7 @@
                             
                             <div class="row">
                                 <div class="col-12 mb-3">
-                                    <label for="pegawai_ids" class="form-label">Pegawai yang Ditugaskan</label>
+                                    <label>Pegawai yang Ditugaskan</label>
                                     <div id="pegawai_selector" class="border rounded p-3">
                                         <!-- Search box -->
                                         <input type="text" class="form-control mb-2" id="pegawai_search" placeholder="🔍 Cari pegawai...">
