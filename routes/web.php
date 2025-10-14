@@ -66,6 +66,7 @@ Route::middleware('auth')->group(function () {
             Route::resource('unit_kerja', UnitKerjaController::class);
             Route::resource('jenis_cuti', JenisCutiController::class);
             Route::resource('sisa_cuti', SisaCutiController::class);
+            Route::get('sisa_cuti/export/pdf', [SisaCutiController::class, 'exportPdf'])->name('sisa_cuti.export.pdf');
             Route::resource('roles', RoleController::class);
             Route::resource('permissions', PermissionController::class);
             Route::get('roles/{id}/permissions', [RoleController::class, 'permissions'])->name('roles.permissions');
@@ -94,12 +95,14 @@ Route::middleware('auth')->group(function () {
         Route::middleware(['permission:view cuti'])->group(function () {
             Route::get('cuti/sisa-cuti/{pegawai}', [CutiController::class, 'sisaCuti'])->name('cuti.sisa-cuti');
             Route::resource('cuti', CutiController::class);
+            Route::get('cuti/export/pdf', [CutiController::class, 'exportPdf'])->name('cuti.export.pdf');
         });
 
         // Perjalanan Dinas routes
         Route::middleware(['permission:view perjalanan_dinas'])->group(function () {
             Route::resource('perjalanan_dinas', PerjalananDinasController::class);
             Route::get('pegawai/search', [PerjalananDinasController::class, 'searchPegawai'])->name('perjalanan_dinas.searchpegawai');
+            Route::get('perjalanan_dinas/export/pdf', [PerjalananDinasController::class, 'exportPdf'])->name('perjalanan_dinas.export.pdf');
         });
 
         // Laporan PD routes

@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
 use Carbon\Carbon;
 use Yajra\DataTables\DataTables;
+use Barryvdh\DomPDF\facade\Pdf;
 
 class CutiController extends Controller
 {
@@ -561,5 +562,33 @@ class CutiController extends Controller
     {
         $currentYear = (int) now()->year;
         return [$currentYear - 2, $currentYear - 1, $currentYear];
+    }
+
+    /**
+     * Export cuti data to PDF
+     */
+    public function exportPdf(Request $request)
+    {
+        $cutis = Cuti::with(['pegawai', 'jenisCuti', 'pimpinanApprover'])
+            ->when($request->pegawai_id, function($query) use ($request) {
+                $query->where('pegawai_id', $request->pegawai_id);
+            })
+            ->when($request->jenis_cuti_id, function($query) use ($request) {
+                $query->where('jenis_cuti_id', $request->jenis_cuti_id);
+            })
+            ->when($request->status_persetujuan, function($query) use ($request) {
+                $query->where('status_persetujuan', $request->status_persetujuan);
+            })
+            ->when($request->tanggal_mulai && $request->tanggal_selesai, function($query) use ($request) {
+                $query->whereBetween('tgl_mulai', [$request->tanggal_mulai, $request->tanggal_selesai]);
+            })
+            ->orderBy('tgl_pengajuan', 'desc')
+            ->get();
+
+        $pdf = PDF::loadView('admin.cuti.pdf', compact('cutis'))
+            ->setPaper('a4', 'landscape')
+            ->setOptions(['defaultFont' => 'sans-serif']);
+
+        return $pdf->download('data_cuti_' . date('Y-m-d_H-i-s') . '.pdf');
     }
 }

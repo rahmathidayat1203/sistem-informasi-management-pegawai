@@ -135,9 +135,12 @@ class DashboardController extends Controller
             }
         }
 
+        $sisaCutiTahunBerjalanRecord = $sisaCutiRecords->get($currentYear);
+        $sisaCutiTahunBerjalan = $sisaCutiTahunBerjalanRecord ? (int) $sisaCutiTahunBerjalanRecord->sisa_cuti : 0;
+
         $stats = [
             'total_sisa_cuti' => $totalSisaCuti,
-            'sisa_cuti_tahun_berjalan' => $sisaCutiRecords->get($currentYear)->sisa_cuti ?? 0,
+            'sisa_cuti_tahun_berjalan' => $sisaCutiTahunBerjalan,
             'cuti_pending' => Cuti::where('pegawai_id', $pegawai->id)
                 ->where('status_persetujuan', 'Diajukan')->count(),
             'cuti_disetujui_tahun_ini' => Cuti::where('pegawai_id', $pegawai->id)

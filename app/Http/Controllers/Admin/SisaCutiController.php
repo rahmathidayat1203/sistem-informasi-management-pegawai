@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Yajra\DataTables\DataTables; // Import Yajra DataTables
 use Illuminate\Support\Facades\Validator; // Untuk validasi
+use Barryvdh\DomPDF\facade\Pdf; // Import PDF
 
 class SisaCutiController extends Controller
 {
@@ -163,5 +164,28 @@ class SisaCutiController extends Controller
         $sisaCuti->delete();
 
         return redirect()->route('admin.sisa_cuti.index')->with('success', 'Data sisa cuti berhasil dihapus.');
+    }
+
+    /**
+     * Export sisa cuti data to PDF
+     */
+    public function exportPdf(Request $request)
+    {
+        $sisaCutis = SisaCuti::with('pegawai')
+            ->when($request->pegawai_id, function($query) use ($request) {
+                $query->where('pegawai_id', $request->pegawai_id);
+            })
+            ->when($request->tahun, function($query) use ($request) {
+                $query->where('tahun', $request->tahun);
+            })
+            ->orderBy('tahun', 'desc')
+            ->orderBy('pegawai_id')
+            ->get();
+
+        $pdf = PDF::loadView('admin.sisa_cuti.pdf', compact('sisaCutis'))
+            ->setPaper('a4', 'portrait')
+            ->setOptions(['defaultFont' => 'sans-serif']);
+
+        return $pdf->download('data_sisa_cuti_' . date('Y-m-d_H-i-s') . '.pdf');
     }
 }

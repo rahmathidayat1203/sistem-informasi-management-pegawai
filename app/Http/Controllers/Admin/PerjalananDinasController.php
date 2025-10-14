@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\DataTables;
 use App\Notifications\PerjalananDinasAssigned;
+use Barryvdh\DomPDF\facade\Pdf;
 
 class PerjalananDinasController extends Controller
 {
@@ -174,10 +175,10 @@ class PerjalananDinasController extends Controller
     {
         $search = $request->q;
         
-        $pegawais = Pegawai::select('id', 'nama_lengkap', 'nip')
+        $pegawais = Pegawai::select('id', 'nama_lengkap', 'NIP')
             ->where(function($query) use ($search) {
                 $query->where('nama_lengkap', 'LIKE', '%'.$search.'%')
-                      ->orWhere('nip', 'LIKE', '%'.$search.'%');
+                      ->orWhere('NIP', 'LIKE', '%'.$search.'%');
             })
             ->limit(50)
             ->get();
@@ -340,5 +341,27 @@ class PerjalananDinasController extends Controller
         }
 
         return view('pegawai.perjalanan_dinas.my_assignments', compact('pegawai'));
+    }
+
+    /**
+     * Export perjalanan dinas data to PDF
+     */
+    public function exportPdf(Request $request)
+    {
+        $perjalananDinas = PerjalananDinas::with(['pimpinanPemberiTugas', 'pegawai', 'pegawai.unitKerja'])
+            ->when($request->pimpinan_pemberi_tugas_id, function($query) use ($request) {
+                $query->where('pimpinan_pemberi_tugas_id', $request->pimpinan_pemberi_tugas_id);
+            })
+            ->when($request->tanggal_mulai && $request->tanggal_selesai, function($query) use ($request) {
+                $query->whereBetween('tgl_berangkat', [$request->tanggal_mulai, $request->tanggal_selesai]);
+            })
+            ->orderBy('tgl_berangkat', 'desc')
+            ->get();
+
+        $pdf = PDF::loadView('admin.perjalanan_dinas.pdf', compact('perjalananDinas'))
+            ->setPaper('a4', 'landscape')
+            ->setOptions(['defaultFont' => 'sans-serif']);
+
+        return $pdf->download('data_perjalanan_dinas_' . date('Y-m-d_H-i-s') . '.pdf');
     }
 }

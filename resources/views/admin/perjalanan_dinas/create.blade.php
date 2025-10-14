@@ -143,7 +143,7 @@ $(document).ready(function() {
                     results: data.map(function(item) {
                         return {
                             id: item.id,
-                            text: item.nama_lengkap + ' - ' + (item.NIP || item.nip || '')
+                            text: item.nama_lengkap + ' - ' + (item.NIP || '')
                         };
                     })
                 };

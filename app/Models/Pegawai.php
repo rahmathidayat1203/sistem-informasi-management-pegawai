@@ -84,7 +84,7 @@ class Pegawai extends Model
     {
         return $query->where(function ($q) use ($search) {
             $q->where('nama_lengkap', 'LIKE', '%'.$search.'%')
-              ->orWhere('nip', 'LIKE', '%'.$search.'%');
+              ->orWhere('NIP', 'LIKE', '%'.$search.'%');
         });
     }
 
