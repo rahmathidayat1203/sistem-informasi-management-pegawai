@@ -348,22 +348,9 @@
 <script>
     console.log("🔥 START: Perjalanan Dinas CREATE page loaded");
 </script>
-<!-- LOCAL APPROACH - Use existing jQuery and create custom select -->
+<!-- Custom multi-select implementation - CLEAN VERSION -->
 <script>
-<script>
-// Initialize on window load to ensure all scripts are loaded
-window.addEventListener('load', function() {
-    delayedSelect2Init();
-});
 
-function delayedSelect2Init() {
-    // Wait for DOM to be fully ready
-    setTimeout(function() {
-        initSelect2Ajax();
-    }, 500);
-}
-
-function initSelect2Ajax() {
     try {
         console.log("=== INITIALIZING SELECT2 ===");
         console.log("jQuery available:", typeof $ !== 'undefined');
@@ -463,12 +450,19 @@ function initSelect2Ajax() {
             }
         });
 
-        console.log("✅ Select2 initialized successfully with full data");
+        console.log("✅ Custom multi-select ready - NO SELECT2 NEEDED!");
 
     } catch (error) {
-        console.error('❌ Error initializing Select2:', error);
+        console.error('❌ Error in custom implementation:', error);
     }
-}
+
+    // Test basic functionality
+    setTimeout(function() {
+        if (typeof document.getElementById('pegawai_ids_hidden') !== null) {
+            console.log("✅ Hidden input created successfully:", document.getElementById('pegawai_ids_hidden').name);
+        }
+    }, 2000);
+});
 
 // Date validation
 $(document).ready(function() {
