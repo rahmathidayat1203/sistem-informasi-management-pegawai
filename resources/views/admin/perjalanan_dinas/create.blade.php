@@ -261,8 +261,34 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Submit form normally
-        document.querySelector('form').submit();
+        // Submit form with fetch to handle JSON response
+        const form = document.querySelector('form');
+        const formData = new FormData(form);
+        
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('✅ Response:', data);
+            if (data.success) {
+                alert('🎉 SUCCESS: ' + data.message);
+                alert('Data received: ' + JSON.stringify(data.data, null, 2));
+                // Redirect to list page
+                window.location.href = '/admin/perjalanan_dinas';
+            } else {
+                alert('❌ Error: ' + JSON.stringify(data));
+            }
+        })
+        .catch(error => {
+            console.error('❌ Error:', error);
+            alert('❌ Submit error: ' + error.message);
+        });
     };
     
     window.selectedItems = selectedItems;

@@ -68,6 +68,16 @@ class PerjalananDinasController extends Controller
      */
     public function store(Request $request)
     {
+        // Debug log to see if method is called
+        \Log::info('PERJALANAN DINAS STORE METHOD CALLED');
+        
+        // Return debug response for testing
+        return response()->json([
+            'success' => true,
+            'message' => 'Store method was called successfully!',
+            'data' => $request->all()
+        ]);
+        
         $request->validate([
             'nomor_surat_tugas' => 'required|string|max:255',
             'maksud_perjalanan' => 'required|string',
