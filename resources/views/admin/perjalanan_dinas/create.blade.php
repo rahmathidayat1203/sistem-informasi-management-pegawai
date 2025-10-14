@@ -169,7 +169,7 @@
                                         <a href="{{ route('admin.perjalanan_dinas.index') }}" class="btn btn-secondary">
                                             <i class="fas fa-arrow-left me-1"></i> Kembali
                                         </a>
-                                        <button type="submit" class="btn btn-primary">
+                                        <button type="button" class="btn btn-primary" onclick="validateAndSubmit()">
                                             <i class="fas fa-save me-1"></i> Simpan
                                         </button>
                                     </div>
@@ -320,5 +320,55 @@ document.addEventListener('DOMContentLoaded', function() {
     
     testDebug.innerHTML = `✅ READY: ${items.length} pegawai items found! Search and click enabled.`;
     console.log('✅ Pegawai selector READY');
+    
+    // Make selectedItems globally accessible
+    window.selectedItems = selectedItems;
 });
+
+// Validation and submit function
+window.validateAndSubmit = function() {
+    const hiddenInput = document.getElementById('pegawai_ids_data');
+    const selectedItemsCount = window.selectedItems ? window.selectedItems.size : 0;
+    
+    console.log('🚀 Submit validation:');
+    console.log('Hidden input value:', hiddenInput ? hiddenInput.value : 'NOT FOUND');
+    console.log('Selected items count:', selectedItemsCount);
+    
+    if (selectedItemsCount === 0) {
+        alert('❌ Error: Harap pilih minimal 1 pegawai! \n\nKlik pada nama pegawai di daftar untuk memilih.');
+        
+        // Highlight the pegawai section
+        const pegawaiSelector = document.getElementById('pegawai_selector');
+        if (pegawaiSelector) {
+            pegawaiSelector.style.border = '3px solid #dc3545';
+            pegawaiSelector.scrollIntoView({ behavior: 'smooth' });
+            
+            setTimeout(() => {
+                pegawaiSelector.style.border = '1px solid #ced4da';
+            }, 3000);
+        }
+        return;
+    }
+    
+    // Show confirmation dialog
+    const selectedNames = Array.from(window.selectedItems.values());
+    const confirmMessage = `📋 Konfirmasi Submit:\n\n` +
+        `Pegawai dipilih (${selectedItemsCount}):\n` +
+        `• ${selectedNames.join('\n• ')}\n\n` +
+        `Data yang dipilih benar dan akan disimpan?`;
+    
+    if (!confirm(confirmMessage)) {
+        console.log('❌ Submit cancelled by user');
+        return;
+    }
+    
+    // Submit the form
+    console.log('✅ Submitting form...');
+    const form = document.querySelector('form');
+    if (form) {
+        form.submit();
+    } else {
+        alert('❌ Error: Form tidak ditemukan!');
+    }
+};
 </script>
