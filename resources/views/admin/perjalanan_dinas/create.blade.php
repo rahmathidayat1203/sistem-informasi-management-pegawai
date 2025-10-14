@@ -188,24 +188,32 @@
 // DIRECT SCRIPT - Test if this loads
 console.log('🚀 DIRECT SCRIPT LOADED');
 alert('DIRECT SCRIPT LOADED! Testing...');
-document.getElementById('test_debug').innerHTML = '✅ Direct script loaded successfully!';
 
-// VERY SIMPLE implementation
+// Wait for DOM to be ready
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('✅ DOM Loaded');
+    console.log('✅ DOM Ready');
     
     const testDebug = document.getElementById('test_debug');
     const searchInput = document.getElementById('pegawai_search');
     const pegawaiList = document.getElementById('pegawai_list');
     
-    // Test basic elements
-    if (!testDebug || !searchInput || !pegawaiList) {
-        console.error('❌ Missing elements', {testDebug, searchInput, pegawaiList});
-        if (testDebug) testDebug.innerHTML = 'ERROR: Missing DOM elements';
+    if (testDebug) {
+        testDebug.innerHTML = '✅ DOM Ready - Processing pegawai selector...';
+        console.log('✅ Debug element found!');
+    } else {
+        console.error('❌ Debug element NOT found!');
         return;
     }
     
-    testDebug.innerHTML = '✅ Elements found, starting...';
+    if (!searchInput || !pegawaiList) {
+        console.error('❌ Missing elements', {searchInput, pegawaiList});
+        if (testDebug) testDebug.innerHTML = '❌ Error: Missing search input or pegawai list';
+        return;
+    }
+    
+    console.log('🚀 DEBUG: All DOM elements found successfully!');
+    
+    testDebug.innerHTML = '✅ Elements found, starting search & click setup...';
     
     const items = document.querySelectorAll('.pegawai-item');
     console.log('📊 Found pegawai items:', items.length);
@@ -237,6 +245,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Track selected items
+    const selectedItems = new Map(); // id -> name
+    
     // Simple click handlers
     items.forEach(item => {
         item.addEventListener('click', function() {
@@ -245,15 +256,67 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('👆 Clicked:', {id, name});
             
             // Simple toggle
-            if (this.style.backgroundColor && this.style.backgroundColor !== 'transparent') {
+            if (selectedItems.has(id)) {
+                selectedItems.delete(id);
                 this.style.backgroundColor = 'transparent';
                 this.querySelector('i').className = 'fas fa-plus-circle text-muted';
             } else {
+                selectedItems.set(id, name);
                 this.style.backgroundColor = '#e3f2fd';
                 this.querySelector('i').className = 'fas fa-check-circle text-success';
             }
+            
+            // Update display
+            updateSelectedDisplay(selectedItems);
         });
     });
+    
+    // Update selected display function
+    function updateSelectedDisplay(selectedItems) {
+        const selectedDisplay = document.getElementById('selected_display');
+        const selectedEmpty = document.getElementById('selected_empty');
+        const selectedItemsDiv = document.getElementById('selected_items');
+        const hiddenInput = document.getElementById('pegawai_ids_data');
+        
+        if (selectedItems.size === 0) {
+            if (selectedEmpty) selectedEmpty.classList.remove('d-none');
+            if (selectedItemsDiv) selectedItemsDiv.classList.add('d-none');
+            if (hiddenInput) hiddenInput.value = '';
+        } else {
+            if (selectedEmpty) selectedEmpty.classList.add('d-none');
+            if (selectedItemsDiv) {
+                selectedItemsDiv.classList.remove('d-none');
+                let html = '<div><strong>Pegawai Dipilih (' + selectedItems.size + '):</strong></div><div class="mt-2">';
+                selectedItems.forEach((name, id) => {
+                    html += `<div class="d-inline-block m-1">
+                        <span class="badge bg-primary text-white" style="cursor: pointer;" onclick="unselectPegawai('${id}')" title="Klik untuk hapus">
+                            <i class="fas fa-user"></i> ${name}
+                            <i class="fas fa-times ms-1"></i>
+                        </span>
+                    </div>`;
+                });
+                html += '</div>';
+                selectedItemsDiv.innerHTML = html;
+            }
+            if (hiddenInput) hiddenInput.value = Array.from(selectedItems.keys()).join(',');
+        }
+        
+        console.log('💾 Selected IDs:', Array.from(selectedItems.keys()));
+    }
+    
+    // Global unselect function
+    window.unselectPegawai = function(id) {
+        const item = document.querySelector(`.pegawai-item[data-id="${id}"]`);
+        if (item) {
+            const name = item.dataset.name;
+            if (selectedItems.has(id)) {
+                selectedItems.delete(id);
+                item.style.backgroundColor = 'transparent';
+                item.querySelector('i').className = 'fas fa-plus-circle text-muted';
+                updateSelectedDisplay(selectedItems);
+            }
+        }
+    };
     
     testDebug.innerHTML = `✅ READY: ${items.length} pegawai items found! Search and click enabled.`;
     console.log('✅ Pegawai selector READY');
