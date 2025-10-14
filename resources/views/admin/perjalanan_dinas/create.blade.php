@@ -41,6 +41,10 @@
 @section('content')
 <div class="content-wrapper">
     <div class="container-xxl flex-grow-1 container-p-y">
+        <!-- TESTING - Remove this after debugging -->
+        <div class="alert alert-info">
+            TESTING: If you can see this message, the view is loading correctly.
+        </div>
         <div class="row">
             <div class="col-12">
                 <div class="card">
@@ -129,6 +133,43 @@
                                             <option value="{{ $pegawai->id }}">{{ $pegawai->nama_lengkap }} - {{ $pegawai->NIP }}</option>
                                         @endforeach
                                     </select>
+                                    
+                                    <!-- SIMPLE TESTING - Direct inline script -->
+                                    <script>
+                                    console.log("🚀 INLINE SCRIPT: This should work!");
+                                    document.addEventListener('DOMContentLoaded', function() {
+                                        console.log("🚀 DOMContentLoaded fired");
+                                        
+                                        // Wait longer for Select2 to load from fallback
+                                        setTimeout(function() {
+                                            console.log("🚀 Starting Select2 test inline...");
+                                            if (typeof $ !== 'undefined' && $.fn.select2 !== 'undefined') {
+                                                console.log("✅ jQuery + Select2 available");
+                                                try {
+                                                    $('.select2-ajax').select2({
+                                                        placeholder: 'Test inline - Select2 loaded!',
+                                                        width: '100%',
+                                                        minimumInputLength: 1,
+                                                        multiple: true
+                                                    });
+                                                    console.log("✅ Select2 initialized inline successfully!");
+                                                    
+                                                    // Add visual indicator
+                                                    setTimeout(function() {
+                                                        $('.select2-container').css('border', '3px solid green');
+                                                        console.log("🟢 Green border: Select2 is working!");
+                                                    }, 200);
+                                                    
+                                                } catch(e) {
+                                                    console.error("❌ Select2 inline error:", e);
+                                                }
+                                            } else {
+                                                console.error("❌ Select2 not available. jQuery version:", typeof $ !== 'undefined' ? 'loaded' : 'missing');
+                                                console.log("Select2 version:", $.fn.select2 !== 'undefined' ? 'loaded' : 'missing');
+                                            }
+                                        }, 3000); // Increased timeout to 3 seconds
+                                    });
+                                    </script>
                                     <small class="form-text text-muted">
                                         <i class="fas fa-info-circle"></i> 
                                         <strong>Catatan:</strong> Pilih satu atau lebih pegawai untuk ditugaskan. 
@@ -169,7 +210,35 @@
 @endpush
 
 @push('scripts')
+<script>
+    console.log("🔥 START: Perjalanan Dinas CREATE page loaded");
+</script>
+<!-- Try multiple Select2 sources -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script>
+    console.log("📦 jQuery 3.7.1 loaded");
+</script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    console.log("📦 Select2 v4.1.0 loaded from jsdelivr");
+</script>
+<script>
+// Fallback: Try loading select2 from different CDN
+    if (typeof $.fn.select2 === 'undefined') {
+        console.log("⚠️ Primary Select2 failed, trying fallback...");
+        var script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.1/js/select2.min.js';
+        script.onload = function() {
+            console.log("✅ Select2 loaded from Cloudflare CDN fallback");
+        };
+        script.onerror = function() {
+            console.log("❌ All Select2 sources failed");
+        };
+        document.head.appendChild(script);
+    } else {
+        console.log("✅ Select2 already available");
+    }
+</script>
 <script>
 // Initialize on window load to ensure all scripts are loaded
 window.addEventListener('load', function() {
