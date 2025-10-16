@@ -12,6 +12,11 @@ class NotificationController extends Controller
      */
     public function index(Request $request)
     {
+        // Check if user is authenticated
+        if (!auth()->check()) {
+            return redirect()->route('login');
+        }
+        
         $user = auth()->user();
         
         $notifications = $user->notifications()
@@ -26,6 +31,11 @@ class NotificationController extends Controller
      */
     public function markAsRead(DatabaseNotification $notification)
     {
+        // Check if user is authenticated
+        if (!auth()->check()) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
+        
         if ($notification->notifiable_id !== auth()->id()) {
             abort(403);
         }
@@ -40,6 +50,11 @@ class NotificationController extends Controller
      */
     public function markAllAsRead()
     {
+        // Check if user is authenticated
+        if (!auth()->check()) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
+        
         auth()->user()->unreadNotifications->markAsRead();
         
         return response()->json(['success' => true]);
@@ -50,6 +65,11 @@ class NotificationController extends Controller
      */
     public function unreadCount()
     {
+        // Check if user is authenticated
+        if (!auth()->check()) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
+        
         $count = auth()->user()->unreadNotifications()->count();
         
         return response()->json(['count' => $count]);
@@ -60,6 +80,11 @@ class NotificationController extends Controller
      */
     public function recent(Request $request)
     {
+        // Check if user is authenticated
+        if (!auth()->check()) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
+        
         $user = auth()->user();
         
         $notifications = $user->notifications()
@@ -121,6 +146,11 @@ class NotificationController extends Controller
      */
     public function destroy(DatabaseNotification $notification)
     {
+        // Check if user is authenticated
+        if (!auth()->check()) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
+        
         if ($notification->notifiable_id !== auth()->id()) {
             abort(403);
         }

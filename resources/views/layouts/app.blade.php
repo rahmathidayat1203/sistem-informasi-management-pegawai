@@ -31,6 +31,9 @@
 
     <!-- Icons. Uncomment required icon fonts -->
     <link rel="stylesheet" href="{{ asset('sneat-assets/vendor/fonts/boxicons.css') }}" />
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <!-- Core CSS -->
     <link rel="stylesheet" href="{{ asset('sneat-assets/vendor/css/core.css') }}" class="template-customizer-core-css" />
@@ -112,19 +115,45 @@
 <script>
 // Global notification functions
 function updateNotificationCount() {
-    $.get('{{ route("notifications.unread-count") }}', function(data) {
-        $('#notification-count').text(data.count);
-        
-        // Also update any other notification counts on the page
-        $('[data-unread-count]').each(function() {
-            $(this).attr('data-unread-count', data.count);
-        });
+    $.ajax({
+        url: '{{ route("notifications.unread-count") }}',
+        type: 'GET',
+        success: function(data) {
+            $('#notification-count').text(data.count);
+            
+            // Also update any other notification counts on the page
+            $('[data-unread-count]').each(function() {
+                $(this).attr('data-unread-count', data.count);
+            });
+        },
+        error: function(xhr, status, error) {
+            // Handle 401 Unauthorized specifically - likely session expired
+            if (xhr.status === 401) {
+                console.log('Session expired - redirecting to login');
+                window.location.href = '{{ route("login") }}';
+            } else {
+                console.log('Notification count update error:', error);
+            }
+        }
     });
 }
 
 function loadNotifications() {
-    $.get('{{ route("notifications.recent") }}', function(data) {
-        $('#notification-dropdown-list').html(data.html);
+    $.ajax({
+        url: '{{ route("notifications.recent") }}',
+        type: 'GET',
+        success: function(data) {
+            $('#notification-dropdown-list').html(data.html);
+        },
+        error: function(xhr, status, error) {
+            // Handle 401 Unauthorized specifically - likely session expired
+            if (xhr.status === 401) {
+                console.log('Session expired - redirecting to login');
+                window.location.href = '{{ route("login") }}';
+            } else {
+                console.log('Notifications load error:', error);
+            }
+        }
     });
 }
 
@@ -146,6 +175,15 @@ function handleDropdownNotificationClick(notificationId, actionUrl) {
             } else {
                 // Reload notifications
                 loadNotifications();
+            }
+        },
+        error: function(xhr, status, error) {
+            // Handle 401 Unauthorized specifically - likely session expired
+            if (xhr.status === 401) {
+                console.log('Session expired - redirecting to login');
+                window.location.href = '{{ route("login") }}';
+            } else {
+                console.log('Mark notification as read error:', error);
             }
         }
     });

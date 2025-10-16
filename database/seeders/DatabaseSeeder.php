@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             SuperAdminSeeder::class,
             RolePermissionSeeder::class,
             TestUserSeeder::class,
+            PengaturanSeeder::class,
         ]);
     }
 }

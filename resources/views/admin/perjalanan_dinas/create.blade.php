@@ -8,9 +8,9 @@
         <div class="row">
             <div class="col-12">
                 <div class="card">
-                    <h5 class="card-header">Tambah Perjalanan Dinas</h5>
+                    <h5 class="card-header">Tambah Perjalanan Dinas {{Auth::user()->getRoleNames()}}</h5>
                     <div class="card-body">
-                        <form action="{{ route('admin.perjalanan_dinas.store') }}" method="POST">
+                        <form action="{{ route('admin.perjalanan_dinas.store') }}" method="POST" id="formPerjalananDinas">
                             @csrf
                             
                             <div class="row">
@@ -139,12 +139,13 @@
                                             @endforeach
                                         </div>
                                         
-                                        <!-- Hidden input -->
-                                        <input type="hidden" id="pegawai_ids_data" name="pegawai_ids[]" value="">
+                                        <!-- Hidden inputs for pegawai IDs -->
+                                        <div id="pegawai_inputs_container"></div>
                                     </div>
                                     @error('pegawai_ids')
                                         <div class="invalid-feedback d-block">{{ $message }}</div>
                                     @enderror
+                                    <div id="pegawai_error" class="invalid-feedback" style="display: none;">Pilih minimal 1 pegawai!</div>
                                 </div>
                             </div>
                             
@@ -154,7 +155,7 @@
                                         <a href="{{ route('admin.perjalanan_dinas.index') }}" class="btn btn-secondary">
                                             <i class="fas fa-arrow-left me-1"></i> Kembali
                                         </a>
-                                        <button type="button" class="btn btn-primary" onclick="submitForm()">
+                                        <button type="submit" class="btn btn-primary">
                                             <i class="fas fa-save me-1"></i> Simpan
                                         </button>
                                     </div>
@@ -167,7 +168,6 @@
         </div>
     </div>
 </div>
-@endsection
 
 <script>
 console.log('🔥 SIMPLE PEGAWAI SELECTOR');
@@ -175,13 +175,15 @@ console.log('🔥 SIMPLE PEGAWAI SELECTOR');
 document.addEventListener('DOMContentLoaded', function() {
     console.log('✅ DOM loaded');
     
+    const form = document.getElementById('formPerjalananDinas');
     const searchInput = document.getElementById('pegawai_search');
     const items = document.querySelectorAll('.pegawai-item');
     const selectedItems = new Map();
+    const pegawaiError = document.getElementById('pegawai_error');
     
     console.log('📊 Found', items.length, 'pegawai items');
     
-    // Search
+    // Search functionality
     if (searchInput) {
         searchInput.addEventListener('input', function() {
             const search = this.value.toLowerCase();
@@ -197,7 +199,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Click
+    // Click handler for pegawai items
     items.forEach(item => {
         item.addEventListener('click', function() {
             const id = this.dataset.id;
@@ -217,15 +219,16 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
+    // Update display function
     function updateDisplay() {
         const selectedEmpty = document.getElementById('selected_empty');
         const selectedItemsDiv = document.getElementById('selected_items');
-        const hiddenInput = document.getElementById('pegawai_ids_data');
+        const inputsContainer = document.getElementById('pegawai_inputs_container');
         
         if (selectedItems.size === 0) {
             selectedEmpty.classList.remove('d-none');
             selectedItemsDiv.classList.add('d-none');
-            hiddenInput.value = '';
+            inputsContainer.innerHTML = '';
         } else {
             selectedEmpty.classList.add('d-none');
             selectedItemsDiv.classList.remove('d-none');
@@ -235,10 +238,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 html += `<span class="badge bg-primary me-1 mb-1" style="cursor: pointer;" onclick="removeSelected('${id}')" title="Hapus">${name} ×</span>`;
             });
             selectedItemsDiv.innerHTML = html;
-            hiddenInput.value = Array.from(selectedItems.keys()).join(',');
+            
+            // Create hidden inputs for each selected pegawai
+            inputsContainer.innerHTML = '';
+            selectedItems.forEach((name, id) => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'pegawai_ids[]';
+                input.value = id;
+                inputsContainer.appendChild(input);
+            });
         }
     }
     
+    // Remove selected pegawai
     window.removeSelected = function(id) {
         const item = document.querySelector(`[data-id="${id}"]`);
         if (item && selectedItems.has(id)) {
@@ -249,49 +262,36 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
-    window.submitForm = function() {
+    // Form submit validation
+    form.addEventListener('submit', function(e) {
+        // Hide error message first
+        pegawaiError.style.display = 'none';
+        
         const count = selectedItems.size;
+        
+        // Validate pegawai selection
         if (count === 0) {
+            e.preventDefault();
+            pegawaiError.style.display = 'block';
             alert('❌ Pilih minimal 1 pegawai!');
-            return;
+            return false;
         }
         
+        // Show confirmation
         const names = Array.from(selectedItems.values());
-        if (!confirm(`Submit dengan ${count} pegawai?\n${names.join(', ')}`)) {
-            return;
+        const confirmed = confirm(`Apakah Anda yakin ingin submit dengan ${count} pegawai?\n\n${names.join('\n')}`);
+        
+        if (!confirmed) {
+            e.preventDefault();
+            return false;
         }
         
-        // Submit form with fetch to handle JSON response
-        const form = document.querySelector('form');
-        const formData = new FormData(form);
-        
-        fetch(form.action, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log('✅ Response:', data);
-            if (data.success) {
-                alert('🎉 SUCCESS: ' + data.message);
-                alert('Data received: ' + JSON.stringify(data.data, null, 2));
-                // Redirect to list page
-                window.location.href = '/admin/perjalanan_dinas';
-            } else {
-                alert('❌ Error: ' + JSON.stringify(data));
-            }
-        })
-        .catch(error => {
-            console.error('❌ Error:', error);
-            alert('❌ Submit error: ' + error.message);
-        });
-    };
+        // If validation passes, form will submit normally
+        console.log('✅ Form validation passed, submitting...');
+        return true;
+    });
     
     window.selectedItems = selectedItems;
 });
-
 </script>
+@endsection

@@ -130,6 +130,12 @@
     <li class="menu-header small text-uppercase">
       <span class="menu-header-text">Pengaturan</span>
     </li>
+    <li class="menu-item {{ request()->routeIs('admin.pengaturan.*') ? 'active' : '' }}">
+        <a href="{{ route('admin.pengaturan.index') }}" class="menu-link">
+            <i class="menu-icon tf-icons bx bx-cog"></i>
+            <div data-i18n="Pengaturan">Pengaturan Sistem</div>
+        </a>
+    </li>
     <li class="menu-item {{ request()->routeIs('admin.roles.*') || request()->routeIs('admin.permissions.*') || request()->routeIs('admin.users.*') ? 'active open' : '' }}">
         <a href="javascript:void(0);" class="menu-link menu-toggle">
             <i class="menu-icon tf-icons bx bx-shield-alt-2"></i>

@@ -10,7 +10,12 @@
 <div class="card">
     <h5 class="card-header">Data Pegawai</h5>
     <div class="card-body">
-        <a href="{{ route('admin.pegawai.create') }}" class="btn btn-primary mb-3">Tambah Pegawai</a>
+        <div class="d-flex justify-content-between mb-3">
+        <a href="{{ route('admin.pegawai.create') }}" class="btn btn-primary">Tambah Pegawai</a>
+        <a href="{{ route('admin.pegawai.export.pdf') }}" class="btn btn-success">
+            <i class="fas fa-file-pdf"></i> Export PDF
+        </a>
+    </div>
         <div class="table-responsive">
             <table class="table table-bordered" id="pegawai-table">
                 <thead>

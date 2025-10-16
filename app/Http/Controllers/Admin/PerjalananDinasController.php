@@ -29,8 +29,12 @@ class PerjalananDinasController extends Controller
                     $showUrl = route('admin.perjalanan_dinas.show', $row->id);
                     $editUrl = route('admin.perjalanan_dinas.edit', $row->id);
                     $deleteUrl = route('admin.perjalanan_dinas.destroy', $row->id);
+                    $exportUrl = route('admin.perjalanan_dinas.export.single.pdf', $row->id);
                     $btn = '<a href="' . $showUrl . '" class="btn btn-info btn-sm">Detail</a> ';
                     $btn .= '<a href="' . $editUrl . '" class="btn btn-primary btn-sm">Edit</a> ';
+                    $btn .= '<a href="' . $exportUrl . '" class="btn btn-warning btn-sm me-1" title="Export PDF">
+                                <i class="fas fa-file-pdf"></i> PDF
+                              </a> ';
                     $btn .= '<button onclick="deleteData(\'' . $deleteUrl . '\')" class="btn btn-danger btn-sm">Delete</button>';
                     return $btn;
                 })
@@ -68,16 +72,7 @@ class PerjalananDinasController extends Controller
      */
     public function store(Request $request)
     {
-        // Debug log to see if method is called
-        \Log::info('PERJALANAN DINAS STORE METHOD CALLED');
-        
-        // Return debug response for testing
-        return response()->json([
-            'success' => true,
-            'message' => 'Store method was called successfully!',
-            'data' => $request->all()
-        ]);
-        
+        // dd($request->all());
         $request->validate([
             'nomor_surat_tugas' => 'required|string|max:255',
             'maksud_perjalanan' => 'required|string',
@@ -397,5 +392,20 @@ class PerjalananDinasController extends Controller
             ->setOptions(['defaultFont' => 'sans-serif']);
 
         return $pdf->download('data_perjalanan_dinas_' . date('Y-m-d_H-i-s') . '.pdf');
+    }
+
+    /**
+     * Export single perjalanan dinas data to PDF
+     */
+    public function exportSinglePdf($id)
+    {
+        $perjalananDinas = PerjalananDinas::with(['pimpinanPemberiTugas', 'pegawai', 'pegawai.unitKerja'])
+            ->findOrFail($id);
+
+        $pdf = PDF::loadView('admin.perjalanan_dinas.single_pdf', compact('perjalananDinas'))
+            ->setPaper('a4', 'portrait')
+            ->setOptions(['defaultFont' => 'sans-serif']);
+
+        return $pdf->download('perjalanan_dinas_' . $perjalananDinas->nomor_surat_tugas . '_' . date('Y-m-d_H-i-s') . '.pdf');
     }
 }

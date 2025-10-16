@@ -2,11 +2,11 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Laporan Sisa Cuti</title>
+    <title>Laporan Data Pegawai</title>
     <style>
         @page {
             margin: 30px;
-            size: A4 portrait;
+            size: A4 landscape;
         }
         body {
             font-family: Arial, sans-serif;
@@ -67,9 +67,6 @@
         .text-center {
             text-align: center;
         }
-        .text-right {
-            text-align: right;
-        }
         .footer {
             margin-top: 50px;
         }
@@ -94,15 +91,15 @@
 </head>
 <body>
     <div class="kop">
-        <h1>Pemerintah Daerah Kabupaten/Kota [Nama Daerah]</h1>
-        <h2>[Nama OPD] <br>
-        Alamat: [Alamat Lengkap] Telp: [Nomor Telepon] <br>
-        Website: www.websitekota.go.id, Email: email@kota.go.id</h2>
+        <h1>Pemerintah Daerah {{ App\Models\Pengaturan::get('nama_daerah', '[Nama Daerah]') }}</h1>
+        <h2>{{ App\Models\Pengaturan::get('nama_opd', '[Nama OPD]') }} <br>
+        Alamat: {{ App\Models\Pengaturan::get('alamat_opd', '[Alamat Lengkap]') }} Telp: {{ App\Models\Pengaturan::get('telepon_opd', '[Nomor Telepon]') }} <br>
+        Website: {{ App\Models\Pengaturan::get('website_opd', 'www.websitekota.go.id') }}, Email: {{ App\Models\Pengaturan::get('email_opd', 'email@kota.go.id') }}</h2>
         <hr>
     </div>
 
     <div class="judul">
-        <h3>LAPORAN REKAPITULASI SISA CUTI PEGAWAI</h3>
+        <h3>LAPORAN DATA KEPEGAWAIAN</h3>
         <p>Tahun {{ date('Y') }}</p>
     </div>
 
@@ -111,59 +108,42 @@
             <tr>
                 <th style="width: 4%;">NO</th>
                 <th style="width: 10%;">NIP</th>
-                <th style="width: 20%;">NAMA PEGAWAI</th>
+                <th style="width: 18%;">NAMA PEGAWAI</th>
+                <th style="width: 6%;">GOL.</th>
+                <th style="width: 15%;">JABATAN</th>
                 <th style="width: 12%;">UNIT KERJA</th>
-                <th style="width: 8%;">TAHUN</th>
-                <th style="width: 10%;">JATAH CUTI</th>
-                <th style="width: 10%;">TERPAKAI</th>
-                <th style="width: 10%;">SISA CUTI</th>
-                <th style="width: 8%;">KETERANGAN</th>
+                <th style="width: 8%;">TEMPAT/TGL LAHIR</th>
+                <th style="width: 6%;">JK</th>
+                <th style="width: 6%;">PENDIDIKAN</th>
+                <th style="width: 10%;">ALAMAT</th>
+                <th style="width: 5%;">TELEPON</th>
             </tr>
         </thead>
         <tbody>
-            @php
-                $totalJatah = 0;
-                $totalTerpakai = 0;
-                $totalSisa = 0;
-            @endphp
-            @foreach($sisaCutis as $index => $sisaCuti)
-            @php
-                $terpakai = $sisaCuti->jatah_cuti - $sisaCuti->sisa_cuti;
-                $totalJatah += $sisaCuti->jatah_cuti;
-                $totalTerpakai += $terpakai;
-                $totalSisa += $sisaCuti->sisa_cuti;
-            @endphp
+            @foreach($pegawais as $index => $pegawai)
             <tr>
                 <td class="text-center">{{ $index + 1 }}</td>
-                <td>{{ $sisaCuti->pegawai->NIP ?? '-' }}</td>
-                <td>{{ $sisaCuti->pegawai->nama_lengkap ?? '-' }}</td>
-                <td>{{ $sisaCuti->pegawai->unitKerja->nama_unit ?? '-' }}</td>
-                <td class="text-center">{{ $sisaCuti->tahun }}</td>
-                <td class="text-center">{{ $sisaCuti->jatah_cuti }}</td>
-                <td class="text-center">{{ $terpakai }}</td>
-                <td class="text-center">{{ $sisaCuti->sisa_cuti }}</td>
-                <td class="text-center">
-                    @if($sisaCuti->sisa_cuti > 0)
-                        <span style="color: #155724;">Tersedia</span>
-                    @else
-                        <span style="color: #721c24;">Habis</span>
-                    @endif
-                </td>
+                <td>{{ $pegawai->NIP }}</td>
+                <td>{{ $pegawai->nama_lengkap }}</td>
+                <td>{{ $pegawai->golongan->nama ?? '-' }}</td>
+                <td>{{ $pegawai->jabatan->nama ?? '-' }}</td>
+                <td>{{ $pegawai->unitKerja->nama_unit ?? '-' }}</td>
+                <td>{{ $pegawai->tempat_lahir }}, {{ \Carbon\Carbon::parse($pegawai->tgl_lahir)->format('d/m/Y') }}</td>
+                <td class="text-center">{{ $pegawai->jenis_kelamin == 'L' ? 'L' : 'P' }}</td>
+                <td>{{ $pegawai->pendidikan && $pegawai->pendidikan->first() ? $pegawai->pendidikan->first()->tingkat_pendidikan ?? $pegawai->pendidikan->first()->tingkat ?? '-' : '-' }}</td>
+                <td>{{ $pegawai->alamat }}</td>
+                <td>{{ $pegawai->no_telp }}</td>
             </tr>
             @endforeach
         </tbody>
         <tfoot>
-            <tr style="font-weight: bold; background-color: #f8f9fa;">
-                <td colspan="5" class="text-center">JUMLAH TOTAL</td>
-                <td class="text-center">{{ $totalJatah }}</td>
-                <td class="text-center">{{ $totalTerpakai }}</td>
-                <td class="text-center">{{ $totalSisa }}</td>
-                <td class="text-center">{{ $sisaCutis->count() }} Pegawai</td>
+            <tr>
+                <td colspan="11" class="text-center"><strong>JUMLAH TOTAL: {{ $pegawais->count() }} ORANG</strong></td>
             </tr>
         </tfoot>
     </table>
 
-    @if($sisaCutis->isEmpty())
+    @if($pegawais->isEmpty())
     <p class="text-center">Tidak ada data yang ditemukan.</p>
     @endif
 

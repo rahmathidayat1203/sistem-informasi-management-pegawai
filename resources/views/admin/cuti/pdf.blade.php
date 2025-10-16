@@ -43,7 +43,7 @@
 <body>
     <div class="header">
         <h2>LAPORAN DATA CUTI</h2>
-        <p>Periode: {{ $cutis->isNotEmpty() ? $cutis->first()->tgl_pengajuan->format('d F Y') . ' - ' . $cutis->last()->tgl_pengajuan->format('d F Y') : '-' }}</p>
+        <p>Periode: {{ $cutis->isNotEmpty() ? \Carbon\Carbon::parse($cutis->first()->tgl_pengajuan)->translatedFormat('d F Y') . ' - ' . \Carbon\Carbon::parse($cutis->last()->tgl_pengajuan)->translatedFormat('d F Y') : '-' }}</p>
     </div>
 
     <table>
@@ -69,10 +69,10 @@
                 <td>{{ $cuti->pegawai->nama_lengkap ?? '-' }}</td>
                 <td>{{ $cuti->pegawai->NIP ?? '-' }}</td>
                 <td>{{ $cuti->jenisCuti->nama ?? '-' }}</td>
-                <td>{{ $cuti->tgl_pengajuan->format('d-m-Y') }}</td>
-                <td>{{ $cuti->tgl_mulai->format('d-m-Y') }}</td>
-                <td>{{ $cuti->tgl_selesai->format('d-m-Y') }}</td>
-                <td>{{ Carbon\Carbon::parse($cuti->tgl_mulai)->diffInDays(Carbon\Carbon::parse($cuti->tgl_selesai)) + 1 }} hari</td>
+                <td>{{ \Carbon\Carbon::parse($cuti->tgl_pengajuan)->format('d-m-Y') }}</td>
+                <td>{{ \Carbon\Carbon::parse($cuti->tgl_mulai)->format('d-m-Y') }}</td>
+                <td>{{ \Carbon\Carbon::parse($cuti->tgl_selesai)->format('d-m-Y') }}</td>
+                <td>{{ \Carbon\Carbon::parse($cuti->tgl_mulai)->diffInDays(\Carbon\Carbon::parse($cuti->tgl_selesai)) + 1 }} hari</td>
                 <td>{{ $cuti->status_persetujuan }}</td>
                 <td>{{ $cuti->pimpinanApprover->name ?? '-' }}</td>
                 <td>{{ $cuti->keterangan }}</td>
@@ -85,13 +85,36 @@
     <p style="text-align: center;">Tidak ada data yang ditemukan.</p>
     @endif
 
+    <style>
+        .ttd-container {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 50px;
+        }
+        .ttd-box {
+            text-align: center;
+            width: 300px;
+        }
+        .ttd-box p {
+            margin: 5px 0;
+        }
+        .ttd-line {
+            border-bottom: 1px solid #000;
+            height: 30px;
+            margin: 10px 0;
+        }
+    </style>
     <div class="footer">
-        <div class="tanggal">
-            <p>{{ \Carbon\Carbon::now()->locale('id')->translatedFormat('d F Y') }}</p>
+        <div class="ttd-container">
+            <div class="ttd-box">
+                <p>{{ \Carbon\Carbon::now()->locale('id')->translatedFormat('d F Y') }}</p>
+                <p><strong>MENGETAHUI</strong></p>
+                <p><strong>{{ App\Models\Pengaturan::get('nama_kepala_opd', '[Nama Kepala OPD]') }}</strong></p>
+                <p><strong>Kepala {{ App\Models\Pengaturan::get('nama_opd', '[Nama OPD]') }}</strong></p>
+                <p style="font-size: 9px;"><strong>NIP. {{ App\Models\Pengaturan::get('nip_kepala_opd', '[NIP Kepala OPD]') }}</strong></p>
+                <div class="ttd-line"></div>
+            </div>
         </div>
-        <p>Mengetahui,</p>
-        <br><br><br>
-        <p>(_________________________)</p>
     </div>
 </body>
 </html>

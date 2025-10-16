@@ -28,6 +28,9 @@ class SisaCutiController extends Controller
                 ->addIndexColumn() // Menambahkan kolom nomor urut (DT_RowIndex)
                 ->addColumn('action', function($sisaCuti) {
                     $actionBtn = '<a href="' . route('admin.sisa_cuti.edit', $sisaCuti->id) . '" class="btn btn-sm btn-warning mr-1">Edit</a>';
+                    $actionBtn .= '<a href="' . route('admin.sisa_cuti.export.single.pdf', $sisaCuti->id) . '" class="btn btn-sm btn-success me-1" title="Export PDF">
+                                    <i class="fas fa-file-pdf"></i> PDF
+                                  </a>';
                     $actionBtn .= '<button class="btn btn-sm btn-danger" onclick="deleteData(\''. route('admin.sisa_cuti.destroy', $sisaCuti->id) .'\')">Hapus</button>';
                     return $actionBtn;
                 })
@@ -211,5 +214,19 @@ class SisaCutiController extends Controller
             ->setOptions(['defaultFont' => 'sans-serif']);
 
         return $pdf->download('data_sisa_cuti_' . date('Y-m-d_H-i-s') . '.pdf');
+    }
+
+    /**
+     * Export single sisa cuti data to PDF
+     */
+    public function exportSinglePdf($id)
+    {
+        $sisaCuti = SisaCuti::with('pegawai')->findOrFail($id);
+
+        $pdf = PDF::loadView('admin.sisa_cuti.single_pdf', compact('sisaCuti'))
+            ->setPaper('a4', 'portrait')
+            ->setOptions(['defaultFont' => 'sans-serif']);
+
+        return $pdf->download('sisa_cuti_' . $sisaCuti->pegawai->nama_lengkap . '_tahun_' . $sisaCuti->tahun . '_' . date('Y-m-d_H-i-s') . '.pdf');
     }
 }

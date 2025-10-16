@@ -10,6 +10,8 @@ use App\Models\UnitKerja;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
+use Barryvdh\DomPDF\facade\Pdf;
+use Illuminate\Support\Collection\Collection;
 
 class PegawaiController extends Controller
 {
@@ -25,7 +27,11 @@ class PegawaiController extends Controller
                 ->addColumn('action', function ($row) {
                     $editUrl = route('admin.pegawai.edit', $row->id);
                     $deleteUrl = route('admin.pegawai.destroy', $row->id);
+                    $exportUrl = route('admin.pegawai.export.single.pdf', $row->id);
                     $btn = '<a href="' . $editUrl . '" class="btn btn-primary btn-sm">Edit</a> ';
+                    $btn .= '<a href="' . $exportUrl . '" class="btn btn-warning btn-sm me-1" title="Export PDF">
+                                <i class="fas fa-file-pdf"></i> PDF
+                              </a> ';
                     $btn .= '<button onclick="deleteData(\'' . $deleteUrl . '\')" class="btn btn-danger btn-sm">Delete</button>';
                     return $btn;
                 })
@@ -196,6 +202,68 @@ class PegawaiController extends Controller
             return response()->json(['success' => true, 'message' => 'Data pegawai berhasil dihapus.']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Terjadi kesalahan: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Export all pegawai data to PDF
+     */
+    public function exportPdf(Request $request)
+    {
+        $pegawais = Pegawai::with(['jabatan', 'golongan', 'unitKerja', 'pendidikan'])
+            ->when($request->jabatan_id, function($query) use ($request) {
+                $query->where('jabatan_id', $request->jabatan_id);
+            })
+            ->when($request->golongan_id, function($query) use ($request) {
+                $query->where('golongan_id', $request->golongan_id);
+            })
+            ->when($request->unit_kerja_id, function($query) use ($request) {
+                $query->where('unit_kerja_id', $request->unit_kerja_id);
+            })
+            ->orderBy('nama_lengkap', 'asc')
+            ->get();
+
+        $pdf = PDF::loadView('admin.pegawai.pdf', compact('pegawais'))
+            ->setPaper('a4', 'landscape')
+            ->setOptions(['defaultFont' => 'sans-serif']);
+
+        return $pdf->download('data_pegawai_' . date('Y-m-d_H-i-s') . '.pdf');
+    }
+
+    /**
+     * Export single pegawai data to PDF
+     */
+    public function exportSinglePdf($id)
+    {
+        try {
+            $pegawai = Pegawai::with(['jabatan', 'golongan', 'unitKerja', 'pendidikan'])
+                ->findOrFail($id);
+
+            // Ensure all relationships are loaded safely
+            $pegawai->load(['jabatan', 'golongan', 'unitKerja', 'pendidikan']);
+
+            // Handle potential null relationships
+            if (!$pegawai->jabatan) {
+                $pegawai->jabatan = null;
+            }
+            if (!$pegawai->golongan) {
+                $pegawai->golongan = null;
+            }
+            if (!$pegawai->unitKerja) {
+                $pegawai->unitKerja = null;
+            }
+            if (!$pegawai->pendidikan) {
+                $pegawai->pendidikan = collect();
+            }
+
+            $pdf = PDF::loadView('admin.pegawai.single_pdf', compact('pegawai'))
+                ->setPaper('a4', 'portrait')
+                ->setOptions(['defaultFont' => 'sans-serif']);
+
+            return $pdf->download('pegawai_' . $pegawai->NIP . '_' . date('Y-m-d_H-i-s') . '.pdf');
+        } catch (\Exception $e) {
+            \Log::error('Error exporting pegawai PDF: ' . $e->getMessage());
+            return response()->json(['error' => 'Gagal export PDF: ' . $e->getMessage()], 500);
         }
     }
 }

@@ -10,6 +10,7 @@ use App\Models\UnitKerja;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\DataTables;
+use Barryvdh\DomPDF\facade\Pdf;
 
 class RiwayatJabatanController extends Controller
 {
@@ -26,8 +27,12 @@ class RiwayatJabatanController extends Controller
                     $showUrl = route('admin.riwayat_jabatan.show', $row->id);
                     $editUrl = route('admin.riwayat_jabatan.edit', $row->id);
                     $deleteUrl = route('admin.riwayat_jabatan.destroy', $row->id);
+                    $exportUrl = route('admin.riwayat_jabatan.export.single.pdf', $row->id);
                     $btn = '<a href="' . $showUrl . '" class="btn btn-info btn-sm">Detail</a> ';
                     $btn .= '<a href="' . $editUrl . '" class="btn btn-primary btn-sm">Edit</a> ';
+                    $btn .= '<a href="' . $exportUrl . '" class="btn btn-warning btn-sm me-1" title="Export PDF">
+                                <i class="fas fa-file-pdf"></i> PDF
+                              </a> ';
                     $btn .= '<button onclick="deleteData(\'' . $deleteUrl . '\')" class="btn btn-danger btn-sm">Delete</button>';
                     return $btn;
                 })
@@ -204,5 +209,20 @@ class RiwayatJabatanController extends Controller
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Terjadi kesalahan: ' . $e->getMessage()]);
         }
+    }
+
+    /**
+     * Export single riwayat jabatan data to PDF
+     */
+    public function exportSinglePdf($id)
+    {
+        $riwayatJabatan = RiwayatJabatan::with(['pegawai', 'jabatan', 'unitKerja'])
+            ->findOrFail($id);
+
+        $pdf = PDF::loadView('admin.riwayat_jabatan.single_pdf', compact('riwayatJabatan'))
+            ->setPaper('a4', 'portrait')
+            ->setOptions(['defaultFont' => 'sans-serif']);
+
+        return $pdf->download('riwayat_jabatan_' . $riwayatJabatan->pegawai->nama_lengkap . '_' . date('Y-m-d_H-i-s') . '.pdf');
     }
 }
