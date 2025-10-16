@@ -358,14 +358,14 @@ Jika menemukan bug atau error:
 
 Untuk bantuan lebih lanjut:
 
-- 📧 **Email**: admin@diskominfo.palembang.go.id
+- 📧 **Email**: r63800@gmail.com
 - 📞 **Telepon**: (0711) XXX XXXX
 - 🌐 **Website**: diskominfo.palembang.go.id
 
 ---
 
 <div align="center">
-  <p>Made with ❤️ by <strong>Diskominfo Kota Palembang</strong></p>
+  <p>Made with ❤️ by <strong>Rahmat Hidayat</strong></p>
   
   <p>© 2024 Sistem Informasi Kepegawaian Diskominfo Palembang. All rights reserved.</p>
 </div>
