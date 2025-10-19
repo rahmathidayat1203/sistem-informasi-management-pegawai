@@ -64,9 +64,23 @@ class LaporanPDController extends Controller
      */
     public function create()
     {
-        $perjalananDinas = PerjalananDinas::all();
-        $adminKeuangan = User::role('Admin Keuangan')->get(); // Assuming we use spatie/laravel-permission
-        return view('admin.laporan_pd.create', compact('perjalananDinas', 'adminKeuangan'));
+        // Get pegawai assignments for authenticated user
+        $user = auth()->user();
+        
+        if (!$user->pegawai) {
+            return redirect()->back()->with('error', 'Data pegawai tidak ditemukan.');
+        }
+        
+        $pegawai = $user->pegawai;
+        
+        // Get perjalanan dinas assignments for this pegawai that don't have reports yet
+        $perjalananDinas = $pegawai->perjalananDinas()
+            ->whereDoesntHave('laporanPD', function($query) use ($pegawai) {
+                $query->where('pegawai_id', $pegawai->id);
+            })
+            ->get();
+
+        return view('pegawai.laporan_pd.create', compact('perjalananDinas', 'pegawai'));
     }
 
     /**
@@ -75,7 +89,7 @@ class LaporanPDController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'perjalanan_dinas_id' => 'required|exists:perjalanan_dinas,id|unique:laporan_pd,perjalanan_dinas_id',
+            'perjalanan_dinas_id' => 'required|exists:perjalanan_dinas,id|unique:laporan_pd,perjalanan_dinas_id,NULL,id,pegawai_id,' . auth()->user()->pegawai->id,
             'file_laporan' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240', // 10MB max
             'status_verifikasi' => 'required|in:Belum Diverifikasi,Disetujui,Perbaikan',
             'catatan_verifikasi' => 'nullable|string',
@@ -85,6 +99,9 @@ class LaporanPDController extends Controller
         DB::beginTransaction();
         try {
             $data = $request->all();
+            
+            // Add pegawai_id from authenticated user
+            $data['pegawai_id'] = auth()->user()->pegawai->id;
             
             // Handle file upload
             if ($request->hasFile('file_laporan')) {
@@ -98,7 +115,7 @@ class LaporanPDController extends Controller
             LaporanPD::create($data);
             
             DB::commit();
-            return redirect()->route('admin.laporan_pd.index')->with('success', 'Data laporan perjalanan dinas berhasil ditambahkan.');
+            return redirect()->route('pegawai.laporan_pd.my')->with('success', 'Data laporan perjalanan dinas berhasil ditambahkan.');
         } catch (\Exception $e) {
             DB::rollback();
             return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
@@ -330,5 +347,60 @@ class LaporanPDController extends Controller
             DB::rollback();
             return response()->json(['message' => 'Failed to reject laporan PD'], 500);
         }
+    }
+
+    /**
+     * Display my laporan PD for pegawai.
+     */
+    public function myReports(Request $request)
+    {
+        // Get pegawai from authenticated user
+        $user = auth()->user();
+
+        // Check if user has pegawai relationship
+        if (!$user->pegawai) {
+            return redirect()->route('dashboard')
+                ->with('error', 'Data pegawai tidak ditemukan. Hubungi administrator.');
+        }
+
+        $pegawai = $user->pegawai;
+
+        if ($request->ajax()) {
+            $laporanPDs = $pegawai->laporanPD()
+                ->with(['perjalananDinas', 'adminKeuanganVerifier'])
+                ->select('laporan_pd.*');
+
+            return DataTables::of($laporanPDs)
+                ->addColumn('action', function ($row) {
+                    $showUrl = route('pegawai.laporan_pd.show', $row->id);
+                    $btn = '<a href="' . $showUrl . '" class="btn btn-info btn-sm">Detail</a> ';
+                    return $btn;
+                })
+                ->addColumn('perjalanan_dinas', function ($row) {
+                    return $row->perjalananDinas->nomor_surat_tugas ?? '-';
+                })
+                ->editColumn('tgl_unggah', function ($row) {
+                    return $row->tgl_unggah ? Carbon\Carbon::parse($row->tgl_unggah)->format('d-m-Y H:i') : '-';
+                })
+                ->editColumn('status_verifikasi', function ($row) {
+                    $statusClass = '';
+                    switch ($row->status_verifikasi) {
+                        case 'Belum Diverifikasi':
+                            $statusClass = 'warning';
+                            break;
+                        case 'Disetujui':
+                            $statusClass = 'success';
+                            break;
+                        case 'Perbaikan':
+                            $statusClass = 'danger';
+                            break;
+                    }
+                    return '<span class="badge bg-' . $statusClass . '">' . $row->status_verifikasi . '</span>';
+                })
+                ->rawColumns(['action', 'status_verifikasi'])
+                ->make(true);
+        }
+
+        return view('pegawai.laporan_pd.my_reports', compact('pegawai'));
     }
 }

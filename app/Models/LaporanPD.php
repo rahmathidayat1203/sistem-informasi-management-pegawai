@@ -14,6 +14,7 @@ class LaporanPD extends Model
 
     protected $fillable = [
         'perjalanan_dinas_id',
+        'pegawai_id',
         'file_laporan',
         'tgl_unggah',
         'status_verifikasi',
@@ -26,6 +27,11 @@ class LaporanPD extends Model
     public function perjalananDinas()
     {
         return $this->belongsTo(PerjalananDinas::class);
+    }
+
+    public function pegawai()
+    {
+        return $this->belongsTo(Pegawai::class);
     }
 
     public function adminKeuanganVerifier()

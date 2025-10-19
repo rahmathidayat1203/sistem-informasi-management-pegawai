@@ -32,36 +32,50 @@ Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+// Authenticated User Routes
 Route::middleware('auth')->group(function () {
+    // Profile Routes
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    
+
+    // Notification Routes - FIXED: Consistent naming
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
     Route::get('/notifications/recent', [NotificationController::class, 'recent'])->name('notifications.recent');
-    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
-    Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+    Route::post('/notifications/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-as-read');
+    Route::delete('/notifications/clear-read', [NotificationController::class, 'clearRead'])->name('notifications.clear-read');
+    Route::post('/notifications/{notification}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-as-read');
+    Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy'); // Ganti {id} ke {notification}
 });
 
 // Admin Routes with RBAC protection
 Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
-    
+
     // Routes for Admin Kepegawaian only
     Route::middleware(['role:Admin Kepegawaian'])->group(function () {
+        // Pegawai Management
         Route::resource('pegawai', PegawaiController::class);
         Route::get('pegawai/export/pdf', [PegawaiController::class, 'exportPdf'])->name('pegawai.export.pdf');
         Route::get('pegawai/{id}/export/pdf', [PegawaiController::class, 'exportSinglePdf'])->name('pegawai.export.single.pdf');
+
+        // Master Data
         Route::resource('jabatan', JabatanController::class);
         Route::resource('golongan', GolonganController::class);
         Route::resource('unit_kerja', UnitKerjaController::class);
         Route::resource('jenis_cuti', JenisCutiController::class);
         Route::resource('users', UserController::class);
+
+        // Perjalanan Dinas Management
         Route::resource('perjalanan_dinas', PerjalananDinasController::class);
         Route::get('perjalanan_dinas/export/pdf', [PerjalananDinasController::class, 'exportPdf'])->name('perjalanan_dinas.export.pdf');
         Route::get('perjalanan_dinas/{id}/export/pdf', [PerjalananDinasController::class, 'exportSinglePdf'])->name('perjalanan_dinas.export.single.pdf');
+        Route::post('perjalanan-dinas/{perjalananDinas}/assign', [PerjalananDinasController::class, 'assign'])->name('perjalanan_dinas.assign');
+
+        // API Endpoints
+        Route::get('perjalanan_dinas/search/pegawai', [PerjalananDinasController::class, 'searchPegawai'])->name('perjalanan_dinas.search.pegawai');
     });
-    
+
     // Routes that require specific permissions
     Route::middleware(['permission:view pendidikan'])->group(function () {
         Route::resource('pendidikan', PendidikanController::class);
@@ -94,48 +108,51 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
         Route::post('laporan_pd/{laporanPD}/verify', [LaporanPDController::class, 'verify'])->name('laporan_pd.verify');
         Route::post('laporan_pd/{laporanPD}/reject', [LaporanPDController::class, 'reject'])->name('laporan_pd.reject');
     });
-    
+
     // Route for roles and permissions management
     Route::middleware(['permission:manage users'])->group(function () {
         Route::resource('roles', RoleController::class);
         Route::get('roles/{id}/permissions', [RoleController::class, 'permissions'])->name('roles.permissions');
         Route::put('roles/{id}/assign-permissions', [RoleController::class, 'assignPermissions'])->name('roles.assignPermissions');
     });
-    
+
     // Route for permissions management
     Route::resource('permissions', PermissionController::class);
-    
-    // Route for System admin crud
-    Route::post('perjalanan-dinas/{perjalananDinas}/assign', [PerjalananDinasController::class, 'assign'])->name('perjalanan_dinas.assign');
 
-    // Add route for cuti information
-    Route::get('/notifications', [NotificationController::class, 'index'])->name('admin.notifications');
-    
     // Add route for sisa cuti
     Route::resource('sisa_cuti', SisaCutiController::class);
     Route::get('sisa_cuti/{id}/export/pdf', [SisaCutiController::class, 'exportSinglePdf'])->name('sisa_cuti.export.single.pdf');
     Route::get('sisa_cuti/export/pdf', [SisaCutiController::class, 'exportPdf'])->name('sisa_cuti.export.pdf');
-    
+
     // Pengaturan routes
     Route::get('pengaturan', [PengaturanController::class, 'index'])->name('pengaturan.index');
     Route::put('pengaturan', [PengaturanController::class, 'update'])->name('pengaturan.update');
 });
 
 // Pimpinan specific routes
-Route::middleware(['role:Pimpinan'])->prefix('pimpinan')->name('pimpinan.')->group(function () {
+Route::middleware(['auth', 'role:Pimpinan'])->prefix('pimpinan')->name('pimpinan.')->group(function () {
+    // Profile
+    Route::get('profile', [PegawaiProfileController::class, 'index'])->name('profile');
+
+    // Cuti Approval
     Route::get('cuti/approval', [CutiController::class, 'approvalIndex'])->name('cuti.approval');
     Route::post('cuti/{cuti}/approve', [CutiController::class, 'approve'])->name('cuti.approve');
     Route::post('cuti/{cuti}/reject', [CutiController::class, 'reject'])->name('cuti.reject');
+
+    // Perjalanan Dinas Approval
     Route::get('perjalanan-dinas/pending', [PerjalananDinasController::class, 'pendingIndex'])->name('perjalanan_dinas.pending');
     Route::post('perjalanan-dinas/{perjalananDinas}/approve', [PerjalananDinasController::class, 'approve'])->name('perjalanan_dinas.approve');
     Route::post('perjalanan-dinas/{perjalananDinas}/reject', [PerjalananDinasController::class, 'reject'])->name('perjalanan_dinas.reject');
+
+    // Laporan PD Approval
     Route::get('laporan-pd/pending', [LaporanPDController::class, 'pendingIndex'])->name('laporan_pd.pending');
     Route::post('laporan-pd/{laporanPd}/verify', [LaporanPDController::class, 'verify'])->name('laporan_pd.verify');
     Route::post('laporan-pd/{laporanPd}/reject', [LaporanPDController::class, 'reject'])->name('laporan_pd.reject');
 });
 
 // Pegawai specific routes
-Route::middleware(['role:Pegawai'])->prefix('pegawai')->name('pegawai.')->group(function () {
+Route::middleware(['auth', 'role:Pegawai'])->prefix('pegawai')->name('pegawai.')->group(function () {
+    // Profile Management
     Route::get('profile', [PegawaiProfileController::class, 'index'])->name('profile');
     Route::get('profile/edit', [PegawaiProfileController::class, 'editPersonalData'])->name('profile.edit');
     Route::patch('profile', [PegawaiProfileController::class, 'updatePersonalData'])->name('profile.update');
@@ -143,9 +160,24 @@ Route::middleware(['role:Pegawai'])->prefix('pegawai')->name('pegawai.')->group(
     Route::post('keluarga', [PegawaiProfileController::class, 'storeKeluarga'])->name('keluarga.store');
     Route::get('statistics', [PegawaiProfileController::class, 'statistics'])->name('statistics');
     Route::get('download/{type}/{id}', [PegawaiProfileController::class, 'downloadDocument'])->name('download.document');
+
+    // Cuti Management
     Route::get('cuti/my-cutis', [CutiController::class, 'myCutis'])->name('cuti.my');
+
+    // Perjalanan Dinas
     Route::get('perjalanan-dinas/my-assignments', [PerjalananDinasController::class, 'myAssignments'])->name('perjalanan_dinas.my');
+
+    // Laporan PD
     Route::get('laporan-pd/my-reports', [LaporanPDController::class, 'myReports'])->name('laporan_pd.my');
+    Route::resource('laporan-pd', LaporanPDController::class)->names([
+        'index' => 'laporan_pd.index',
+        'create' => 'laporan_pd.create',
+        'store' => 'laporan_pd.store',
+        'show' => 'laporan_pd.show',
+        'edit' => 'laporan_pd.edit',
+        'update' => 'laporan_pd.update',
+        'destroy' => 'laporan_pd.destroy',
+    ]);
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

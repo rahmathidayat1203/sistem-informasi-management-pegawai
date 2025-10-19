@@ -160,7 +160,7 @@ function loadNotifications() {
 function handleDropdownNotificationClick(notificationId, actionUrl) {
     // Mark as read
     $.ajax({
-        url: `{{ route('notifications.read', ':id') }}`.replace(':id', notificationId),
+        url: `{{ route('notifications.mark-as-read', ':id') }}`.replace(':id', notificationId),
         type: 'POST',
         data: { _token: '{{ csrf_token() }}' },
         success: function() {

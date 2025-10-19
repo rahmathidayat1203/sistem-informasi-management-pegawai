@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Pegawai;
+use App\Models\User;
 use App\Models\Jabatan;
 use App\Models\Golongan;
 use App\Models\UnitKerja;
@@ -12,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
 use Barryvdh\DomPDF\facade\Pdf;
 use Illuminate\Support\Collection\Collection;
+use Illuminate\Support\Str;
 
 class PegawaiController extends Controller
 {
@@ -86,10 +88,34 @@ class PegawaiController extends Controller
                 $data['foto_profil'] = $path;
             }
 
-            Pegawai::create($data);
+            // Buat data pegawai
+            $pegawai = Pegawai::create($data);
+            
+            // Buat akun user terkait secara otomatis
+            $defaultPassword = Str::random(10);
+            $defaultEmail = $pegawai->NIP . '@sipeg.com'; // Example default email
+
+            $userData = [
+                'pegawai_id' => $pegawai->id,
+                'name' => $pegawai->nama_lengkap,
+                'username' => $pegawai->NIP,
+                'email' => $defaultEmail,
+                'password' => bcrypt($defaultPassword),
+            ];
+            
+            User::create($userData);
             
             DB::commit();
-            return redirect()->route('admin.pegawai.index')->with('success', 'Data pegawai berhasil ditambahkan.');
+
+                        $successMessage = 'Data pegawai berhasil ditambahkan. Akun login telah dibuat dengan: <br>'
+
+                                       . 'Username: ' . $pegawai->NIP . '<br>'
+
+                                       . 'Password: ' . $defaultPassword;
+
+            
+
+                        return redirect()->route('admin.pegawai.index')->with('success', $successMessage);
         } catch (\Exception $e) {
             DB::rollback();
             return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
@@ -138,11 +164,12 @@ class PegawaiController extends Controller
             'golongan_id' => 'required|exists:golongan,id',
             'unit_kerja_id' => 'required|exists:unit_kerja,id',
             'foto_profil' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'password' => 'nullable|string|min:8|confirmed',
         ]);
 
         DB::beginTransaction();
         try {
-            $data = $request->all();
+            $data = $request->except('password', 'password_confirmation');
             
             // Handle file upload
             if ($request->hasFile('foto_profil')) {
@@ -172,6 +199,13 @@ class PegawaiController extends Controller
             }
 
             $pegawai->update($data);
+            
+            // Update user password if provided
+            if ($request->filled('password')) {
+                $pegawai->user->update([
+                    'password' => bcrypt($request->password),
+                ]);
+            }
             
             DB::commit();
             return redirect()->route('admin.pegawai.index')->with('success', 'Data pegawai berhasil diperbarui.');

@@ -182,7 +182,7 @@ class NotificationApiTest extends TestCase
         $dbNotification = $user->notifications()->first();
         $this->assertNull($dbNotification->read_at);
         
-        $response = $this->post(route('notifications.read', $dbNotification->id));
+        $response = $this->post(route('notifications.mark-as-read', $dbNotification->id));
         $response->assertJson(['success' => true]);
         
         $dbNotification->refresh();
@@ -205,7 +205,7 @@ class NotificationApiTest extends TestCase
         $dbNotification = $otherUser->notifications()->first();
         
         // Try to mark other user's notification as read
-        $response = $this->post(route('notifications.read', $dbNotification->id));
+        $response = $this->post(route('notifications.mark-as-read', $dbNotification->id));
         $response->assertForbidden();
     }
 
@@ -226,7 +226,7 @@ class NotificationApiTest extends TestCase
         $response->assertJson(['count' => 5]);
         
         // Mark all as read
-        $response = $this->post(route('notifications.read-all'));
+        $response = $this->post(route('notifications.mark-as-read-all'));
         $response->assertJson(['success' => true]);
         
         // All should be read now

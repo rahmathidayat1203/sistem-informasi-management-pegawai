@@ -163,6 +163,47 @@
                 @endif
             </div>
             
+            <!-- Form untuk mengelola akun user -->
+            <div class="border rounded p-3 mb-4">
+                <h6 class="mb-3 text-primary">Data Akun Pengguna</h6>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="username" name="username" value="{{ old('username', $pegawai->user ? $pegawai->user->username : '') }}" readonly>
+                            <small class="form-text text-muted">Username tidak dapat diubah.</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" value="{{ old('email', $pegawai->user ? $pegawai->user->email : '') }}" readonly>
+                            <small class="form-text text-muted">Email tidak dapat diubah.</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password Baru</label>
+                            <input type="password" class="form-control @error('password') is-invalid @enderror" id="password" name="password">
+                            @error('password')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <small class="form-text text-muted">Kosongkan jika tidak ingin mengubah password.</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="password_confirmation" class="form-label">Konfirmasi Password Baru</label>
+                            <input type="password" class="form-control" id="password_confirmation" name="password_confirmation">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
             <button type="submit" class="btn btn-primary">Update</button>
             <a href="{{ route('admin.pegawai.index') }}" class="btn btn-secondary">Batal</a>
         </form>

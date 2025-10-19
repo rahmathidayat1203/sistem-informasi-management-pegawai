@@ -44,7 +44,7 @@ class Pegawai extends Model
 
     public function user()
     {
-        return $this->hasOne(User::class);
+        return $this->belongsTo(User::class, 'id', 'pegawai_id');
     }
 
     public function pendidikan()
@@ -75,6 +75,11 @@ class Pegawai extends Model
     public function perjalananDinas()
     {
         return $this->belongsToMany(PerjalananDinas::class, 'pegawai_perjalanan_dinas');
+    }
+
+    public function laporanPD()
+    {
+        return $this->hasMany(LaporanPD::class);
     }
 
     /**
